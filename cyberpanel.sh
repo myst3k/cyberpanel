@@ -36,10 +36,34 @@ TOTAL_RAM=$(free -m | awk '/Mem:/ { print $2 }')
 CENTOS_8="False"
 UBUNTU_20="False"
 WATCHDOG="OFF"
-BRANCH_NAME="v${TEMP:12:3}.${TEMP:25:1}"
 VIRT_TYPE=""
-GIT_URL="github.com/usmannasir/cyberpanel"
-GIT_CONTENT_URL="raw.githubusercontent.com/usmannasir/cyberpanel"
+
+set_repos_and_branch() {
+  local GIT_DIR
+  local GIT_USER
+  local GIT_REPO
+
+  if [ -z ${GIT_URL+x} ]; then
+    GIT_URL="github.com/usmannasir/cyberpanel"
+  else
+    printf "Found custom provided GIT URL..."
+  fi
+
+  if [ -z ${BRANCH_NAME+x} ]; then
+    BRANCH_NAME="v${TEMP:12:3}.${TEMP:25:1}"
+  else
+    printf "Found custom provided branch..."
+  fi
+
+  GIT_DIR=$(dirname "$GIT_URL")
+  GIT_USER=$(basename "$GIT_DIR")
+  GIT_REPO=$(basename "$GIT_URL")
+  GIT_CONTENT_URL="raw.githubusercontent.com/$GIT_USER/$GIT_REPO"
+
+  printf "Github URL: %s\n" "$GIT_URL"
+  printf "Github Content URL: %s\n" "$GIT_CONTENT_URL"
+  printf "Github Branch: %s\n" "$BRANCH_NAME"
+}
 
 disable_repos() {
 
@@ -1627,6 +1651,7 @@ initialize() {
 }
 
 begin_install() {
+  set_repos_and_branch
   initialize "$@"
   check_OS
   check_virtualization
