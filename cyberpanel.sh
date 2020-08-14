@@ -955,7 +955,6 @@ interactive_install() {
 
   DEV="ON"
   if [[ $TMP_YN == "" ]]; then
-    BRANCH_NAME="v${TEMP:12:3}.${TEMP:25:1}"
     echo -e "\nBranch name set to $BRANCH_NAME"
   else
     base_number="1.9.3"
