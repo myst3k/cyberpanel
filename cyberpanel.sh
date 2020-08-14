@@ -1506,7 +1506,6 @@ options edns0" /etc/resolv.conf
 
 argument_mode() {
   DEV="ON"
-  BRANCH_NAME="stable"
   #default to python3 branch.
   KEY_SIZE=${#VERSION}
   TMP=$(echo $VERSION | cut -c5)
