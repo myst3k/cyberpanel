@@ -60,7 +60,7 @@ set_repos_and_branch() {
   GIT_REPO=$(basename "$GIT_URL")
   GIT_CONTENT_URL="raw.githubusercontent.com/$GIT_USER/$GIT_REPO"
 
-  printf "\n~~~~~~~~~~"
+  printf "\n~~~~~~~~~~\n"
   printf "Github URL: %s\n" "$GIT_URL"
   printf "Github Content URL: %s\n" "$GIT_CONTENT_URL"
   printf "Github Branch: %s\n" "$BRANCH_NAME"
