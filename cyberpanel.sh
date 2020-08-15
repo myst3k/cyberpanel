@@ -39,6 +39,16 @@ WATCHDOG="OFF"
 VIRT_TYPE=""
 MASTER_GIT_URL="github.com/usmannasir/cyberpanel"
 
+run_command() {
+  "$@"
+  local status=$?
+  if (( status != 0 )); then
+        printf "ERROR Running Command:\e[39m\n \"\e[32m%s\e[39m\"\n" "$@" >&2
+        exit $status
+  fi
+  return $status
+}
+
 set_git_repos_and_branch() {
   local GIT_DIR
   local GIT_USER
@@ -1074,6 +1084,9 @@ interactive_install() {
 }
 
 main_install() {
+
+  # install b2
+  run_command "pip3 install b2"
 
   if [[ -e /usr/local/CyberCP ]]; then
     echo -e "\n CyberPanel already installed, exiting..."
