@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #CyberPanel installer script for CentOS 7.X, CentOS 8.X, CloudLinux 7.X, Ubuntu 18.04 and Ubuntu 20.04
 
@@ -37,22 +37,23 @@ CENTOS_8="False"
 UBUNTU_20="False"
 WATCHDOG="OFF"
 VIRT_TYPE=""
+MASTER_GIT_URL="github.com/usmannasir/cyberpanel"
 
-set_repos_and_branch() {
+set_git_repos_and_branch() {
   local GIT_DIR
   local GIT_USER
   local GIT_REPO
 
   if [ -z ${GIT_URL+x} ]; then
-    GIT_URL="github.com/usmannasir/cyberpanel"
+    GIT_URL=$MASTER_GIT_URL
   else
-    printf "Found custom provided GIT URL..."
+    printf "Found custom provided GIT URL...\n"
   fi
 
   if [ -z ${BRANCH_NAME+x} ]; then
     BRANCH_NAME="v${TEMP:12:3}.${TEMP:25:1}"
   else
-    printf "Found custom provided branch..."
+    printf "Found custom provided branch...\n"
   fi
 
   GIT_DIR=$(dirname "$GIT_URL")
@@ -1651,7 +1652,7 @@ initialize() {
 }
 
 begin_install() {
-  set_repos_and_branch
+  set_git_repos_and_branch
   initialize "$@"
   check_OS
   check_virtualization
