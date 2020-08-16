@@ -334,7 +334,7 @@ deb-src http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted univers
 deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted universe multiverse
 deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
 EOF
-        DEBIAN_FRONTEND=noninteractive apt update -y
+        apt update -y
       fi
     fi
   fi
@@ -469,25 +469,14 @@ install_required() {
   fi
 
   if [[ $SERVER_OS == "Ubuntu" ]]; then
-
-    apt update -y
-    DEBIAN_FRONTEND=noninteractive apt upgrade -y
-    DEBIAN_FRONTEND=noninteracitve apt install -y htop telnet libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev libattr1 libattr1-dev liblzma-dev libgpgme-dev libmariadbclient-dev libcurl4-gnutls-dev libssl-dev nghttp2 libnghttp2-dev idn2 libidn2-dev libidn2-0-dev librtmp-dev libpsl-dev nettle-dev libgnutls28-dev libldap2-dev libgssapi-krb5-2 libk5crypto3 libkrb5-dev libcomerr2 libldap2-dev virtualenv git socat vim unzip zip
-    check_return
-
-    DEBIAN_FRONTEND=noninteractive apt install -y python3-pip
-    check_return
+    run "apt update -yq"
+    run "apt upgrade -yq"
+    run "apt install -yq build-essential libssl-dev libffi-dev python3-dev htop telnet libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev libattr1 libattr1-dev liblzma-dev libgpgme-dev libmariadbclient-dev libcurl4-gnutls-dev libssl-dev nghttp2 libnghttp2-dev idn2 libidn2-dev libidn2-0-dev librtmp-dev libpsl-dev nettle-dev libgnutls28-dev libldap2-dev libgssapi-krb5-2 libk5crypto3 libkrb5-dev libcomerr2 libldap2-dev virtualenv git socat vim unzip zip python3-pip python3-venv"
     ln -s /usr/bin/pip3 /usr/bin/pip3.6
-    DEBIAN_FRONTEND=noninteractive apt install -y build-essential libssl-dev libffi-dev python3-dev
-    check_return
-    DEBIAN_FRONTEND=noninteractive apt install -y python3-venv
-    check_return
 
     if [[ $UBUNTU_20 == "True" ]]; then
-      pip3 install virtualenv==16.7.9
+      run "pip3 install virtualenv==16.7.9"
     fi
-    check_return
-
   fi
 }
 
@@ -516,14 +505,14 @@ memcached_installation() {
     fi
   fi
   if [[ $SERVER_OS == "Ubuntu" ]]; then
-    DEBIAN_FRONTEND=noninteractive apt install -y lsphp74-memcached
-    DEBIAN_FRONTEND=noninteractive apt install -y lsphp73-memcached
-    DEBIAN_FRONTEND=noninteractive apt install -y lsphp72-memcached
-    DEBIAN_FRONTEND=noninteractive apt install -y lsphp71-memcached
-    DEBIAN_FRONTEND=noninteractive apt install -y lsphp70-memcached
+    apt install -y lsphp74-memcached
+    apt install -y lsphp73-memcached
+    apt install -y lsphp72-memcached
+    apt install -y lsphp71-memcached
+    apt install -y lsphp70-memcached
 
     if [[ $TOTAL_RAM -eq "2048" ]] || [[ $TOTAL_RAM -gt "2048" ]]; then
-      DEBIAN_FRONTEND=noninteractive apt install build-essential zlib1g-dev libexpat1-dev openssl libssl-dev libsasl2-dev libpcre3-dev git -y
+      apt install build-essential zlib1g-dev libexpat1-dev openssl libssl-dev libsasl2-dev libpcre3-dev git -y
       wget https://$DOWNLOAD/litespeed/lsmcd.tar.gz
       tar xzvf lsmcd.tar.gz
       DIR=$(pwd)
@@ -533,12 +522,10 @@ memcached_installation() {
       make
       make install
       cd $DIR
-      systemctl enable lsmcd
-      systemctl start lsmcd
+      systemctl enable --now lsmcd
     else
-      DEBIAN_FRONTEND=noninteractive apt install -y memcached
-      systemctl enable memcached
-      systemctl start memcached
+      apt install -y memcached
+      systemctl enable --now memcached
     fi
   fi
 
@@ -557,12 +544,7 @@ redis_installation() {
     yum install -y lsphp74-redis lsphp73-redis lsphp72-redis lsphp71-redis lsphp70-redis lsphp56-redis lsphp55-redis lsphp54-redis redis
   fi
   if [[ $SERVER_OS == "Ubuntu" ]]; then
-    DEBIAN_FRONTEND=noninteractive apt install -y lsphp74-redis
-    DEBIAN_FRONTEND=noninteractive apt install -y lsphp73-redis
-    DEBIAN_FRONTEND=noninteractive apt install -y lsphp72-redis
-    DEBIAN_FRONTEND=noninteractive apt install -y lsphp71-redis
-    DEBIAN_FRONTEND=noninteractive apt install -y lsphp70-redis
-    DEBIAN_FRONTEND=noninteractive apt install -y redis
+    run "apt install -y lsphp70-redis lsphp71-redis lsphp72-redis lsphp73-redis lsphp74-redis redis"
   fi
 
   if ifconfig -a | grep inet6; then
@@ -573,15 +555,13 @@ redis_installation() {
   fi
 
   if [[ $SERVER_OS == "CentOS" ]]; then
-    systemctl enable redis
-    systemctl start redis
+    systemctl enable --now redis
   fi
 
   if [[ $SERVER_OS == "Ubuntu" ]]; then
     systemctl stop redis-server
     rm -f /var/run/redis/redis-server.pid
-    systemctl enable redis-server
-    systemctl start redis-server
+    systemctl enable --now redis-server
   fi
 
   if ps -aux | grep "redis" | grep -v grep; then
@@ -635,6 +615,7 @@ check_OS() {
     if uname -m | grep -q 64; then
       echo -e "\nDetecting Ubuntu 18.04...\n"
       SERVER_OS="Ubuntu"
+      export DEBIAN_FRONTEND=noninteractive
     else
       echo -e "\nUbuntu 18.04 x32 detected...ths only works on x64 system."
       exit
@@ -643,6 +624,7 @@ check_OS() {
     if uname -m | grep -q 64; then
       echo -e "\nDetecting Ubuntu 20.04 ...\n"
       SERVER_OS="Ubuntu"
+      export DEBIAN_FRONTEND=noninteractive
       UBUNTU_20="True"
     else
       echo -e "\nUbuntu 20 x32 detected...ths only works on x64 system."
@@ -688,26 +670,22 @@ check_panel() {
 
 check_process() {
   if systemctl is-active --quiet httpd; then
-    systemctl disable httpd
-    systemctl stop httpd
+    systemctl disable --now httpd
     systemctl mask httpd
     echo -e "\nhttpd process detected, disabling...\n"
   fi
   if systemctl is-active --quiet apache2; then
-    systemctl disable apache2
-    systemctl stop apache2
+    systemctl disable --now apache2
     systemctl mask apache2
     echo -e "\napache2 process detected, disabling...\n"
   fi
   if systemctl is-active --quiet named; then
-    systemctl stop named
-    systemctl disable named
+    systemctl disable --now named
     systemctl mask named
     echo -e "\nnamed process detected, disabling...\n"
   fi
   if systemctl is-active --quiet exim; then
-    systemctl stop exim
-    systemctl disable exim
+    systemctl disable --now exim
     systemctl mask exim
     echo -e "\nexim process detected, disabling...\n"
   fi
@@ -1158,7 +1136,7 @@ main_install() {
 
 pip_virtualenv() {
   if [[ $SERVER_OS == "Ubuntu" ]]; then
-    DEBIAN_FRONTEND=noninteractive apt install -y locales
+    apt install -y locales
     locale-gen "en_US.UTF-8"
     update-locale LC_ALL="en_US.UTF-8"
   fi
@@ -1314,7 +1292,7 @@ EOF
             echo "yes" >/etc/pure-ftpd/conf/ChrootEveryone
             systemctl restart pure-ftpd-mysql
           fi
-          DEBIAN_FRONTEND=noninteractive apt install libmagickwand-dev pkg-config build-essential -y
+          apt install libmagickwand-dev pkg-config build-essential -y
           mkdir /usr/local/lsws/cyberpanel-tmp
           cd /usr/local/lsws/cyberpanel-tmp
           wget -O timezonedb.tgz https://pecl.php.net/get/timezonedb
