@@ -43,7 +43,7 @@ run_command() {
   "$@"
   local status=$?
   if (( status != 0 )); then
-        printf "ERROR Running Command:\e[39m\n \"\e[32m%s\e[39m\"\n" "$@" >&2
+        printf "\e[31mERROR Running Command:\e[39m\n \"\e[32m%s\e[39m\"\n" "$@" >&2
         exit $status
   fi
   return $status
