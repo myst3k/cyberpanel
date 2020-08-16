@@ -1085,9 +1085,6 @@ interactive_install() {
 
 main_install() {
 
-  # install b2
-  run_command "pip3 install b2"
-
   if [[ -e /usr/local/CyberCP ]]; then
     echo -e "\n CyberPanel already installed, exiting..."
     exit
@@ -1281,10 +1278,9 @@ EOF
     virtualenv -p /usr/bin/python3 /usr/local/CyberCP
 
     if [[ $UBUNTU_20 == "False" ]]; then
-      source /usr/local/CyberCP/bin/activate
-      check_return
-      pip3 install --ignore-installed /usr/local/pip-packs/*
-      check_return
+      run_command "source /usr/local/CyberCP/bin/activate"
+      run_command "pip3 install --ignore-installed /usr/local/pip-packs/*"
+      run_command "pip3 install b2"
     else
       . /usr/local/CyberCP/bin/activate
       check_return
