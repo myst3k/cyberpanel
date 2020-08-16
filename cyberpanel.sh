@@ -1171,22 +1171,16 @@ pip_virtualenv() {
     #wget https://raw.githubusercontent.com/usmannasir/cyberpanel/$BRANCH_NAME/requirments.txt
     virtualenv -p /usr/bin/python3 /usr/local/CyberPanel
 
+    run_command ". /usr/local/CyberPanel/bin/activate"
     if [[ $UBUNTU_20 == "False" ]]; then
-      source /usr/local/CyberPanel/bin/activate
-      wget -O /usr/local/cyberpanel-pip.zip https://rep.cyberpanel.net/cyberpanel-pip-3.zip
-      check_return
-      unzip /usr/local/cyberpanel-pip.zip -d /usr/local
-      check_return
-      pip3.6 install --ignore-installed /usr/local/pip-packs/*
+      run_command "wget -O /usr/local/cyberpanel-pip.zip https://rep.cyberpanel.net/cyberpanel-pip-3.zip"
+      run_command "unzip -f /usr/local/cyberpanel-pip.zip -d /usr/local"
+      run_command "pip3 install --ignore-installed /usr/local/pip-packs/*"
       check_return
     else
-      . /usr/local/CyberPanel/bin/activate
-      wget -O /usr/local/cyberpanel-pip.zip https://rep.cyberpanel.net/ubuntu-pip-3.zip
-      check_return
-      unzip /usr/local/cyberpanel-pip.zip -d /usr/local
-      check_return
-      pip3 install --ignore-installed /usr/local/packages/*
-      check_return
+      run_command "wget -O /usr/local/cyberpanel-pip.zip https://rep.cyberpanel.net/ubuntu-pip-3.zip"
+      run_command "unzip -f /usr/local/cyberpanel-pip.zip -d /usr/local"
+      run_command "pip3 install --ignore-installed /usr/local/packages/*"
     fi
   fi
 
@@ -1277,16 +1271,15 @@ EOF
 
     virtualenv -p /usr/bin/python3 /usr/local/CyberCP
 
+    run_command ". /usr/local/CyberCP/bin/activate"
     if [[ $UBUNTU_20 == "False" ]]; then
-      run_command "source /usr/local/CyberCP/bin/activate"
       run_command "pip3 install --ignore-installed /usr/local/pip-packs/*"
-      run_command "pip3 install b2"
     else
-      . /usr/local/CyberCP/bin/activate
-      check_return
-      pip3 install --ignore-installed /usr/local/packages/*
-      check_return
+      run_command "pip3 install --ignore-installed /usr/local/packages/*"
     fi
+
+    ## install b2 python package
+    run_command "pip3 install b2"
 
     systemctl restart lscpd
 
