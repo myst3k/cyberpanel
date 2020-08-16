@@ -1175,12 +1175,12 @@ pip_virtualenv() {
     run ". /usr/local/CyberPanel/bin/activate"
     if [[ $UBUNTU_20 == "False" ]]; then
       run "wget -O /usr/local/cyberpanel-pip.zip https://rep.cyberpanel.net/cyberpanel-pip-3.zip"
-      run "unzip -f /usr/local/cyberpanel-pip.zip -d /usr/local"
+      run "unzip -oq /usr/local/cyberpanel-pip.zip -d /usr/local"
       run "pip3 install --ignore-installed /usr/local/pip-packs/*"
       check_return
     else
       run "wget -O /usr/local/cyberpanel-pip.zip https://rep.cyberpanel.net/ubuntu-pip-3.zip"
-      run "unzip -f /usr/local/cyberpanel-pip.zip -d /usr/local"
+      run "unzip -oq /usr/local/cyberpanel-pip.zip -d /usr/local"
       run "pip3 install --ignore-installed /usr/local/packages/*"
     fi
   fi
