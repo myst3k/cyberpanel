@@ -46,15 +46,25 @@ COL_RED='\e[1;31m'
 COL_BLUE='\e[1;94m'
 
 run() {
+  local quiet_commands=("apt_quiet" "pip_quiet")
+  local calling_func_name=${FUNCNAME[ 1 ]}
+  local input="$*"
   local status
-  cmd="$* 2> >(while read line; do echo -e \"\n${COL_RED}\$line${COL_NC}\" >&2; done)"
-  eval $cmd
+  local cmd
+
+  cmd="$input 2> >(while read line; do echo -e \"\n${COL_RED}\$line${COL_NC}\" >&2; done)"
+  eval "$cmd"
   status=$?
   if (( status != 0 )); then
         printf "\e[31mERROR Running Command:\e[39m\n \"\e[32m%s\e[39m\"\n" "$@" >&2
         exit $status
   fi
-  printf "%b  ...DONE!%b\n" "${COL_RED}" "${COL_NC}"
+
+  # shellcheck disable=SC2199
+  # shellcheck disable=SC2076
+  if [[ " ${quiet_commands[@]} " =~ " $calling_func_name " ]]; then
+    printf "%b  ...DONE!%b\n" "${COL_RED}" "${COL_NC}"
+  fi
   return $status
 }
 
@@ -63,6 +73,15 @@ apt_quiet() {
   local cmd
   input="$*"
   cmd="apt-get -y $input"
+  printf "%bRunning: %b%s%b" "${COL_GREEN}" "${COL_CYAN}" "$cmd" "${COL_NC}"
+  run "$cmd 1>/dev/null"
+}
+
+pip_quiet() {
+  local input
+  local cmd
+  input="$*"
+  cmd="pip3 -q $input"
   printf "%bRunning: %b%s%b" "${COL_GREEN}" "${COL_CYAN}" "$cmd" "${COL_NC}"
   run "$cmd 1>/dev/null"
 }
@@ -492,7 +511,7 @@ install_required() {
     ln -s /usr/bin/pip3 /usr/bin/pip3.6
 
     if [[ $UBUNTU_20 == "True" ]]; then
-      run "pip3 install virtualenv==16.7.9"
+      pip_quiet "install virtualenv==16.7.9"
     fi
   fi
 }
@@ -1109,9 +1128,9 @@ main_install() {
   if [[ $debug == "1" ]]; then
 
     if [[ $UBUNTU_20 == "False" ]]; then
-      pip3.6 install --ignore-installed /usr/local/pip-packs/*
+      pip_quiet "install --ignore-installed /usr/local/pip-packs/*"
     else
-      pip3.6 install --ignore-installed /usr/local/packages/*
+      pip_quiet "install --ignore-installed /usr/local/packages/*"
     fi
 
     if [[ $REDIS_HOSTING == "Yes" ]]; then
@@ -1167,12 +1186,12 @@ pip_virtualenv() {
     if [[ $UBUNTU_20 == "False" ]]; then
       run "wget -O /usr/local/cyberpanel-pip.zip https://rep.cyberpanel.net/cyberpanel-pip-3.zip"
       run "unzip -oq /usr/local/cyberpanel-pip.zip -d /usr/local"
-      run "pip3 install --ignore-installed /usr/local/pip-packs/*"
+      pip_quiet "install --ignore-installed /usr/local/pip-packs/*"
       check_return
     else
       run "wget -O /usr/local/cyberpanel-pip.zip https://rep.cyberpanel.net/ubuntu-pip-3.zip"
       run "unzip -oq /usr/local/cyberpanel-pip.zip -d /usr/local"
-      run "pip3 install --ignore-installed /usr/local/packages/*"
+      pip_quiet "install --ignore-installed /usr/local/packages/*"
     fi
   fi
 
@@ -1265,13 +1284,13 @@ EOF
 
     run ". /usr/local/CyberCP/bin/activate"
     if [[ $UBUNTU_20 == "False" ]]; then
-      run "pip3 install --ignore-installed /usr/local/pip-packs/*"
+      pip_quiet "install --ignore-installed /usr/local/pip-packs/*"
     else
-      run "pip3 install --ignore-installed /usr/local/packages/*"
+      pip_quiet "install --ignore-installed /usr/local/packages/*"
     fi
 
     ## install b2 python package
-    run "pip3 install b2"
+    pip_quiet "install b2"
 
     systemctl restart lscpd
 
