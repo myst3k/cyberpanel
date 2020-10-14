@@ -5,7 +5,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from backup.api.backup_serializers import BackupSerializer, ListBackupsSerializer
+from backup.api.serializers import BackupSerializer, ListBackupsSerializer
 from loginSystem.models import Administrator
 from plogical.acl import ACLManager
 from websiteFunctions.models import Websites

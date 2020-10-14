@@ -1,37 +1,34 @@
 import json
 import os
 
-from django.http import HttpResponseForbidden, HttpResponse, HttpResponseServerError
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
 
-from backup.BackupError import UnauthorizedError
-from backup.BackupService import BackupService
 from backup.backupManager import BackupManager
 from backup.pluginManager import pluginManager
 from loginSystem.views import loadLoginPage
 from plogical.CyberCPLogFileWriter import CyberCPLogFileWriter as logging
 
 
-def deleteBackup(request) -> HttpResponse:
+def deleteBackup(request):
     try:
         userID = request.session['userID']
+
         result = pluginManager.preDeleteBackup(request)
         if result != 200:
             return result
-        data = json.loads(request.body)
 
-        BackupService.deleteBackup(userID, json.loads(request.body))
+        wm = BackupManager()
+        coreResult = wm.deleteBackup(userID, json.loads(request.body))
 
         result = pluginManager.postDeleteBackup(request, coreResult)
         if result != 200:
             return result
 
-        return HttpResponse()
-    except UnauthorizedError:
-        return HttpResponseForbidden()
-    except Exception as e:
-        return HttpResponseServerError()
+        return coreResult
+
+    except KeyError:
+        return redirect(loadLoginPage)
 
 
 def gDriveSetup(request):

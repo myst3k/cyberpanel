@@ -1207,8 +1207,8 @@ pip_virtualenv() {
       pip3 install --ignore-installed /usr/local/packages/*
       check_return
     fi
-      pip3 install --ignore-installed djangorestframework # TODO: remove after package gets put in
-      check_return
+    pip3 install --ignore-installed djangorestframework # TODO: remove after package gets put in
+    check_return
   fi
 
   if [ -f requirements.txt ] && [ -d cyberpanel ]; then
