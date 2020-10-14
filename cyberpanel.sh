@@ -1206,6 +1206,8 @@ pip_virtualenv() {
       check_return
       pip3 install --ignore-installed /usr/local/packages/*
       check_return
+      pip3 install --ignore-installed djangorestframework # TODO: remove after package gets put in
+      check_return
     fi
   fi
 
