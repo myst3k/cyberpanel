@@ -2,10 +2,11 @@
 import os
 import os.path
 import sys
-import django
-from django.http import JsonResponse
+from typing import List
 
-from backup import BackupError
+import django
+from django.core.exceptions import PermissionDenied
+
 from backup.BackupError import UnauthorizedError
 
 sys.path.append('/usr/local/CyberCP')
@@ -18,20 +19,19 @@ from websiteFunctions.models import Websites, Backups, dest, backupSchedules, Ba
 from plogical.virtualHostUtilities import virtualHostUtilities
 import subprocess
 import shlex
-from django.shortcuts import HttpResponse, render
+from django.shortcuts import HttpResponse
 from loginSystem.models import Administrator
 from plogical.mailUtilities import mailUtilities
 from random import randint
+from pathlib import Path
 import time
 import plogical.backupUtilities as backupUtil
 from plogical.processUtilities import ProcessUtilities
 from multiprocessing import Process
 import requests
-import google.oauth2.credentials
-import googleapiclient.discovery
-from googleapiclient.discovery import build
 from websiteFunctions.models import NormalBackupDests, NormalBackupJobs, NormalBackupSites
 from plogical.IncScheduler import IncScheduler
+
 
 class BackupService:
 
@@ -39,22 +39,33 @@ class BackupService:
         pass
 
     @staticmethod
-    def getBackups(userID: str, domain: str) -> []:
+    def getBackups(userID: str, domain: str) -> List[object]:
+        """
+            Returns a list of backups, or error.
+        """
         currentACL = ACLManager.loadedACL(userID)
         user = Administrator.objects.get(pk=userID)
 
-        if ACLManager.checkOwnership(domain, user, currentACL) == 1:
-            pass
-        else:
-            raise UnauthorizedError()
+        if ACLManager.checkOwnership(domain, user, currentACL) == 0:
+            raise PermissionDenied()
 
         website = Websites.objects.get(domain=domain)
         return website.backups_set.all()
 
+    @staticmethod
+    def deleteBackup(userID: str, backupId: str):
+        backup = Backups.objects.get(id=backupId)
+        domainName = backup.website.domain
+        currentACL = ACLManager.loadedACL(userID)
+        admin = Administrator.objects.get(pk=userID)
 
+        if ACLManager.checkOwnership(domainName, admin, currentACL) == 0:
+            raise PermissionDenied()
 
-
-
+        path = Path("/home/", domainName, "/backup/", backup.fileName, ".tar.gz")
+        command = f'sudo rm -f {str(path)}'
+        ProcessUtilities.executioner(command)
+        backup.delete()
 
     def gDriveSetup(self, userID=None, request=None):
         try:
@@ -333,9 +344,6 @@ class BackupService:
             data_ret = {'status': 0, 'error_message': str(msg)}
             json_data = json.dumps(data_ret)
             return HttpResponse(json_data)
-
-
-
 
     def submitBackupCreation(self, userID=None, data=None):
         try:
@@ -760,7 +768,6 @@ class BackupService:
             final_json = json.dumps(final_dic)
             return HttpResponse(final_json)
 
-
     def getCurrentBackupSchedules(self, userID=None, data=None):
         try:
             currentACL = ACLManager.loadedACL(userID)
@@ -880,7 +887,6 @@ class BackupService:
         except BaseException as msg:
             final_json = json.dumps({'delStatus': 0, 'error_message': str(msg)})
             return HttpResponse(final_json)
-
 
     def submitRemoteBackups(self, userID=None, data=None):
         try:
@@ -1232,8 +1238,6 @@ class BackupService:
             json_data = json.dumps(data)
             return HttpResponse(json_data)
 
-
-
     def fetchLogs(self, userID=None, data=None):
         try:
             currentACL = ACLManager.loadedACL(userID)
@@ -1315,7 +1319,6 @@ class BackupService:
             selectedAccount = data['selectedAccount']
             recordsToShow = int(data['recordsToShow'])
             page = int(str(data['page']).strip('\n'))
-
 
             if ACLManager.currentContextPermission(currentACL, 'scheDuleBackups') == 0:
                 return ACLManager.loadErrorJson('scheduleStatus', 0)
@@ -1539,7 +1542,6 @@ class BackupService:
             data_ret = {'status': 0, 'error_message': str(msg)}
             json_data = json.dumps(data_ret)
             return HttpResponse(json_data)
-
 
     def deleteAccountNormal(self, request=None, userID=None, data=None):
         try:

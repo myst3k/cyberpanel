@@ -2,7 +2,6 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-    url(r'^getCurrentBackups', views.getCurrentBackups, name='getCurrentBackups'),
     url(r'^gDriveSetup$', views.gDriveSetup, name='gDriveSetup'),
     url(r'^fetchgDriveSites$', views.fetchgDriveSites, name='fetchgDriveSites'),
     url(r'^addSitegDrive$', views.addSitegDrive, name='addSitegDrive'),

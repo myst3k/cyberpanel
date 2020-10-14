@@ -119,12 +119,7 @@
 
 {% block footer_scripts %}
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue-simple-alert@1.1.1/lib/index.min.js"></script>
     <script>
-        import Vue from "vue";
-        import VueSimpleAlert from "vue-simple-alert";
-        Vue.use(VueSimpleAlert);
-
         let backupRestoreSiteApp = new Vue({
             delimiters: ['[[', ']]'],
             el: '#backupRestoreSiteApp',
@@ -139,23 +134,40 @@
                 getCurrentBackups: function() {
                     const requestOptions = {
                         method: "POST",
-                        headers: {"X-CSRFToken": getCookie('csrftoken')},
+                        headers: {'Content-Type': 'application/json', "X-CSRFToken": getCookie('csrftoken')},
                         body: JSON.stringify({domain: this.selectedSite})
                     }
                     if (this.selectedSite === "") {
                         this.currentBackups = []
                     } else {
-                        fetch("/backup/getCurrentBackups", requestOptions)
-                            .then(response => response.json())
+                        fetch("/api/v2/backups", requestOptions)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(response.status + " " + response.statusText)
+                                }
+                                return response.json()
+                            })
                             .then(data => this.currentBackups = data)
                             .catch(error => console.error("Error: ", error))
                     }
                 },
                 deleteBackup: function(backupId) {
-                    this.$confirm("Are you sure?").then(() => {
-                      //do something...
-                    });
-                    console.log("deleting id: " + backupId)
+                    const requestOptions = {
+                        method: "POST",
+                        headers: {'Content-Type': 'application/json', "X-CSRFToken": getCookie('csrftoken')},
+                        body: JSON.stringify({backupId: backupId})
+                    }
+                    if (this.selectedSite === "") {
+                        this.currentBackups = []
+                    } else {
+                        fetch("/backup/deleteBackup", requestOptions)
+                            .then(resp => {
+                                if (resp.ok) {
+                                    this.currentBackups = resp
+                                }
+                            })
+                            .catch(error => console.error("Error: ", error))
+                    }
                 }
             },
         })

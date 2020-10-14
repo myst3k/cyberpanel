@@ -1,37 +1,41 @@
 import json
 import os
 
-from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse, HttpResponseServerError
 from django.shortcuts import redirect
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.exceptions import PermissionDenied
 
 from backup.BackupError import UnauthorizedError
 from backup.BackupService import BackupService
 from backup.backupManager import BackupManager
 from backup.pluginManager import pluginManager
+from loginSystem.models import Administrator
 from loginSystem.views import loadLoginPage
 from plogical.CyberCPLogFileWriter import CyberCPLogFileWriter as logging
+from plogical.acl import ACLManager
+from websiteFunctions.models import Backups
 
 
-def getCurrentBackups(request) -> HttpResponse:
+def deleteBackup(request) -> HttpResponse:
     try:
         userID = request.session['userID']
+        result = pluginManager.preDeleteBackup(request)
+        if result != 200:
+            return result
         data = json.loads(request.body)
-        if 'domain' in data:
-            domain = data['domain']
-            backups = BackupService.getBackups(userID, domain)
-            backupsList = []
-            for backup in backups:
-                if backup.status == 0:
-                    status = "Pending"
-                else:
-                    status = "Completed"
-                backupsList.append({"id": backup.id, "file": backup.fileName, "date": backup.date, "size": backup.size,
-                                    "status": status})
 
-            return JsonResponse(backupsList, safe=False)
+        BackupService.deleteBackup(userID, json.loads(request.body))
+
+        # result = pluginManager.postDeleteBackup(request, coreResult)
+        if result != 200:
+            return result
+
+        return HttpResponse()
     except UnauthorizedError:
         return HttpResponseForbidden()
+    except Exception as e:
+        return HttpResponseServerError()
 
 
 def gDriveSetup(request):
@@ -128,27 +132,6 @@ def cancelBackupCreation(request):
         userID = request.session['userID']
         wm = BackupManager()
         return wm.cancelBackupCreation(userID, json.loads(request.body))
-    except KeyError:
-        return redirect(loadLoginPage)
-
-
-def deleteBackup(request):
-    try:
-        userID = request.session['userID']
-
-        result = pluginManager.preDeleteBackup(request)
-        if result != 200:
-            return result
-
-        wm = BackupManager()
-        coreResult = wm.deleteBackup(userID, json.loads(request.body))
-
-        result = pluginManager.postDeleteBackup(request, coreResult)
-        if result != 200:
-            return result
-
-        return coreResult
-
     except KeyError:
         return redirect(loadLoginPage)
 

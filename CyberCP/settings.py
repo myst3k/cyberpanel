@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'baseTemplate',
     'loginSystem',
     'packages',
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
     'managePHP',
     'manageSSL',
     'api',
+    'apiv2',
     'filemanager',
     'manageServices',
     'pluginHolder',
@@ -194,3 +196,10 @@ LANGUAGES = (
 MEDIA_URL = '/home/cyberpanel/media/'
 MEDIA_ROOT = MEDIA_URL
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'apiv2.customBasicAuthentication.CustomBasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ]
+}
