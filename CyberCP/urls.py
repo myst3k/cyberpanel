@@ -34,7 +34,7 @@ urlpatterns = [
     url(r'^managephp/',include('managePHP.urls')),
     url(r'^manageSSL/',include('manageSSL.urls')),
     url(r'^api/',include('api.urls')),
-    url(r'^api/v2/',include('apiv2.urls')),
+    url(r'^api/v2/backups/', include('backup.api.urls')),
     url(r'^filemanager/',include('filemanager.urls')),
     url(r'^emailPremium/',include('emailPremium.urls')),
     url(r'^manageservices/',include('manageServices.urls')),

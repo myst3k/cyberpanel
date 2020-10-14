@@ -2,7 +2,7 @@ import base64
 import binascii
 
 from rest_framework import authentication, HTTP_HEADER_ENCODING, exceptions
-from plogical.CyberCPLogFileWriter import CyberCPLogFileWriter as logging
+from django.utils.translation import gettext_lazy as _
 
 from loginSystem.models import Administrator
 from plogical import hashPassword
@@ -23,7 +23,7 @@ def get_authorization_header(request):
 
 class CustomBasicAuthentication(authentication.BaseAuthentication):
     """
-    HTTP Basic authentication against username/password.
+    Custom HTTP Basic authentication against username/password.
     """
     www_authenticate_realm = 'api'
 
@@ -58,14 +58,11 @@ class CustomBasicAuthentication(authentication.BaseAuthentication):
         Authenticate the userid and password against username and password
         with optional request for context.
         """
-        logging.writeToFile(f"got username and password {userid} {password}")
-        user = Administrator.objects.get(userName=userid)
-
-        logging.writeToFile("found user: %s" % user)
-
-        if not user.exists():
-            logging.writeToFile("user doesnt exist")
+        try:
+            user = Administrator.objects.get(userName=userid)
+        except Administrator.DoesNotExist:
             raise exceptions.AuthenticationFailed(_('Invalid username/password.'))
+
         user.username = user.userName
 
         if hashPassword.check_password(user.password, password):
@@ -74,7 +71,6 @@ class CustomBasicAuthentication(authentication.BaseAuthentication):
             else:
                 request.session['userID'] = user.pk
         else:
-            logging.writeToFile("password check failed")
             raise exceptions.AuthenticationFailed(_('Invalid username/password.'))
 
         return (user, None)

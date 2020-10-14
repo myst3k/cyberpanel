@@ -12,5 +12,5 @@ urlpatterns = [
     url(r'^remoteBackups', views.remoteBackups, name='remoteBackups'),
     url(r'^backupLogs$', views.backupLogs, name='backupLogs'),
 
-    url(r'^', include('backup.api.urls')),
+    url(r'^', include('backup.api.urls_v1')),
 ]
