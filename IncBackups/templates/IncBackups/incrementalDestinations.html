@@ -168,6 +168,17 @@
                             </div>
 
                             <div class="form-group">
+                                <label class="col-sm-3 control-label">{% trans "Region" %}</label>
+                                <div class="col-sm-6">
+                                    <select class="form-control" ng-model="REGION" required>
+                                    {% for region in wasabi_regions %}
+                                        <option>{{ region }}</option>
+                                    {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
                                 <label class="col-sm-3 control-label">{% trans "AWS_ACCESS_KEY_ID" %}</label>
                                 <div class="col-sm-6">
                                     <input type="text" class="form-control" ng-model="AWS_ACCESS_KEY_ID" required>

@@ -18,6 +18,7 @@ from plogical.processUtilities import ProcessUtilities
 from plogical.virtualHostUtilities import virtualHostUtilities
 from websiteFunctions.models import Websites
 from .IncBackupProvider import IncBackupProvider
+from .IncBackupWasabiRegion import IncBackupWasabiRegion
 from .IncBackupsControl import IncJobs
 from .models import IncJob, BackupJob, JobSites
 
@@ -73,7 +74,9 @@ def backupDestinations(request):
         if ACLManager.currentContextPermission(currentACL, 'addDeleteDestinations') == 0:
             return ACLManager.loadError()
 
-        return defRenderer(request, 'IncBackups/incrementalDestinations.html', {})
+        wasabi_regions = IncBackupWasabiRegion.list_names()
+
+        return defRenderer(request, 'IncBackups/incrementalDestinations.html', {'wasabi_regions': wasabi_regions})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
