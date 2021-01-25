@@ -18,7 +18,6 @@ from plogical.processUtilities import ProcessUtilities
 from plogical.virtualHostUtilities import virtualHostUtilities
 from websiteFunctions.models import Websites
 from .IncBackupProvider import IncBackupProvider
-from .IncBackupWasabiRegion import IncBackupWasabiRegion
 from .IncBackupsControl import IncJobs
 from .models import IncJob, BackupJob, JobSites
 
