@@ -313,47 +313,61 @@ app.controller('incrementalDestinations', function ($scope, $http) {
     $scope.cyberpanelLoading = true;
     $scope.sftpHide = true;
     $scope.awsHide = true;
+    $scope.wasabiHide = true;
 
     $scope.fetchDetails = function () {
 
         if ($scope.destinationType === 'SFTP') {
             $scope.sftpHide = false;
             $scope.awsHide = true;
+            $scope.wasabiHide = true;
             $scope.populateCurrentRecords();
-        } else {
-            $scope.sftpHide = true;
+        }
+
+        if ($scope.destinationType === "Amazon S3") {
             $scope.awsHide = false;
+            $scope.sftpHide = true;
+            $scope.wasabiHide = true;
+            $scope.populateCurrentRecords();
+        }
+
+        if ($scope.destinationType === "Wasabi") {
+            $scope.wasabiHide = false;
+            $scope.sftpHide = true;
+            $scope.awsHide = true;
             $scope.populateCurrentRecords();
         }
     };
 
     $scope.populateCurrentRecords = function () {
-
         $scope.cyberpanelLoading = false;
 
+        let url = "/IncrementalBackups/populateCurrentRecords";
 
-        url = "/IncrementalBackups/populateCurrentRecords";
-
-        var type = 'SFTP';
+        let type = '';
         if ($scope.destinationType === 'SFTP') {
             type = 'SFTP';
-        } else {
-            type = 'AWS';
         }
 
-        var data = {
+        if ($scope.destinationType === "Amazon S3") {
+            type = 'Amazon S3';
+        }
+
+        if ($scope.destinationType === "Wasabi") {
+            type = 'Wasabi';
+        }
+
+        let data = {
             type: type
         };
 
-        var config = {
+        let config = {
             headers: {
                 'X-CSRFToken': getCookie('csrftoken')
             }
         };
 
-
         $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
-
 
         function ListInitialDatas(response) {
             $scope.cyberpanelLoading = true;
@@ -366,7 +380,6 @@ app.controller('incrementalDestinations', function ($scope, $http) {
                     type: 'error'
                 });
             }
-
         }
 
         function cantLoadInitialDatas(response) {
@@ -377,39 +390,47 @@ app.controller('incrementalDestinations', function ($scope, $http) {
                 type: 'error'
             });
         }
-
     };
 
     $scope.addDestination = function (type) {
         $scope.cyberpanelLoading = false;
 
+        let url = "/IncrementalBackups/addDestination";
 
-        url = "/IncrementalBackups/addDestination";
-
-        if (type === 'SFTP') {
-            var data = {
+        let data = {}
+        if ($scope.destinationType === 'SFTP') {
+            data = {
                 type: type,
                 IPAddress: $scope.IPAddress,
                 password: $scope.password,
                 backupSSHPort: $scope.backupSSHPort
             };
-        } else {
-            var data = {
+        }
+
+        if ($scope.destinationType === "Amazon S3") {
+            data = {
                 type: type,
                 AWS_ACCESS_KEY_ID: $scope.AWS_ACCESS_KEY_ID,
                 AWS_SECRET_ACCESS_KEY: $scope.AWS_SECRET_ACCESS_KEY,
             };
         }
 
-        var config = {
+        if ($scope.destinationType === "Wasabi") {
+            data = {
+                type: type,
+                BUCKET_NAME: $scope.BUCKET_NAME,
+                AWS_ACCESS_KEY_ID: $scope.AWS_ACCESS_KEY_ID,
+                AWS_SECRET_ACCESS_KEY: $scope.AWS_SECRET_ACCESS_KEY,
+            };
+        }
+
+        let config = {
             headers: {
                 'X-CSRFToken': getCookie('csrftoken')
             }
         };
 
-
         $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
-
 
         function ListInitialDatas(response) {
             $scope.cyberpanelLoading = true;
@@ -438,29 +459,25 @@ app.controller('incrementalDestinations', function ($scope, $http) {
                 type: 'error'
             });
         }
-
     };
 
     $scope.removeDestination = function (type, ipAddress) {
         $scope.cyberpanelLoading = false;
 
+        let url = "/IncrementalBackups/removeDestination";
 
-        url = "/IncrementalBackups/removeDestination";
-
-        var data = {
+        let data = {
             type: type,
             IPAddress: ipAddress,
         };
 
-        var config = {
+        let config = {
             headers: {
                 'X-CSRFToken': getCookie('csrftoken')
             }
         };
 
-
         $http.post(url, data, config).then(ListInitialDatas, cantLoadInitialDatas);
-
 
         function ListInitialDatas(response) {
             $scope.cyberpanelLoading = true;
@@ -478,7 +495,6 @@ app.controller('incrementalDestinations', function ($scope, $http) {
                     type: 'error'
                 });
             }
-
         }
 
         function cantLoadInitialDatas(response) {
@@ -489,10 +505,7 @@ app.controller('incrementalDestinations', function ($scope, $http) {
                 type: 'error'
             });
         }
-
     };
-
-
 });
 
 
