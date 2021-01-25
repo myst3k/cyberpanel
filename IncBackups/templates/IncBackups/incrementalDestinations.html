@@ -125,7 +125,7 @@
                             <div class="form-group">
                                 <label class="col-sm-3 control-label"></label>
                                 <div class="col-sm-4">
-                                    <button type="button" ng-click="addDestination('AWS')"
+                                    <button type="button" ng-click="addDestination('Amazon S3')"
                                             class="btn btn-primary btn-lg btn-block">{% trans "Add Destination" %}</button>
 
                                 </div>
@@ -157,6 +157,76 @@
                             </div>
                         </div>
                         <!--- AWS  END --->
+
+                        <!--- WASABI START --->
+                        <div ng-hide="wasabiHide">
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% trans "Bucket Name" %}</label>
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" ng-model="bucket_name" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% trans "AWS_ACCESS_KEY_ID" %}</label>
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" ng-model="AWS_ACCESS_KEY_ID" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% trans "AWS_ACCESS_KEY_ID" %}</label>
+                                <div class="col-sm-6">
+                                    <input type="text" class="form-control" ng-model="AWS_ACCESS_KEY_ID" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label">{% trans "AWS_SECRET_ACCESS_KEY" %}</label>
+                                <div class="col-sm-6">
+                                    <input placeholder="" type="password" class="form-control"
+                                           ng-model="AWS_SECRET_ACCESS_KEY" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-3 control-label"></label>
+                                <div class="col-sm-4">
+                                    <button type="button" ng-click="addDestination('Wasabi')"
+                                            class="btn btn-primary btn-lg btn-block">{% trans "Add Destination" %}</button>
+
+                                </div>
+                            </div>
+
+                            <!------ List of Destinations --------------->
+                            <div class="form-group">
+
+                                <div class="col-sm-12">
+
+                                    <table class="table">
+                                        <thead>
+                                        <tr>
+                                            <th>{% trans "Bucket Name" %}</th>
+                                            <th>{% trans "AWS_ACCESS_KEY_ID" %}</th>
+                                            <th>{% trans "Delete" %}</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr ng-repeat="record in records track by $index">
+                                            <td ng-bind="record.bucket"></td>
+                                            <td ng-bind="record.AWS_ACCESS_KEY_ID"></td>
+                                            <td ng-click="removeDestination('Wasabi', record.AWS_ACCESS_KEY_ID)"><img
+                                                    src="{% static 'images/delete.png' %}">
+                                            </td>
+
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <!--- WASABI  END --->
+
                     </form>
 
 
