@@ -16,6 +16,7 @@ import time
 from plogical.CyberCPLogFileWriter import CyberCPLogFileWriter as logging
 from loginSystem.views import loadLoginPage
 import stat
+from .IncBackupProvider import IncBackupProvider
 # Create your views here.
 
 
@@ -64,6 +65,7 @@ def backupDestinations(request):
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
 
+
 def addDestination(request):
     try:
         userID = request.session['userID']
@@ -74,7 +76,7 @@ def addDestination(request):
 
         data = json.loads(request.body)
 
-        if data['type'] == 'SFTP':
+        if data['type'].lower() == IncBackupProvider.SFTP.value.lower():
 
             ipAddress = data['IPAddress']
             password = data['password']
@@ -91,12 +93,10 @@ def addDestination(request):
                 final_json = json.dumps(final_dic)
                 return HttpResponse(final_json)
 
-
             try:
                 os.mkdir('/home/cyberpanel/sftp')
             except:
                 pass
-
 
             execPath = "/usr/local/CyberCP/bin/python " + virtualHostUtilities.cyberPanel + "/plogical/backupUtilities.py"
             execPath = execPath + " submitDestinationCreation --ipAddress " + ipAddress + " --password " \
@@ -134,7 +134,6 @@ def addDestination(request):
                     writeToFile.write(content)
                 writeToFile.close()
 
-
                 command = 'mv %s /root/.ssh/config' % (tmpFile)
                 ProcessUtilities.executioner(command)
 
@@ -145,12 +144,12 @@ def addDestination(request):
                 final_json = json.dumps(final_dic)
                 return HttpResponse(final_json)
 
-
             else:
                 final_dic = {'status': 0, 'error_message': output}
                 final_json = json.dumps(final_dic)
                 return HttpResponse(final_json)
-        else:
+
+        if data['type'].lower() == IncBackupProvider.S3.value.lower():
             aws = '/home/cyberpanel/aws'
 
             try:
@@ -168,6 +167,34 @@ def addDestination(request):
             writeToFile.close()
 
             os.chmod(awsFile, stat.S_IRUSR | stat.S_IWUSR)
+
+            final_dic = {'status': 1}
+            final_json = json.dumps(final_dic)
+            return HttpResponse(final_json)
+
+        if data['type'].lower() == IncBackupProvider.WASABI.value.lower():
+            path = '/home/cyberpanel/wasabi'
+
+            try:
+                os.mkdir(path)
+            except:
+                pass
+
+            BUCKET_NAME = data['BUCKET_NAME']
+            AWS_ACCESS_KEY_ID = data['AWS_ACCESS_KEY_ID']
+            AWS_SECRET_ACCESS_KEY = data['AWS_SECRET_ACCESS_KEY']
+
+            wasabiFile = '/home/cyberpanel/wasabi/%s-%s' % (BUCKET_NAME, AWS_ACCESS_KEY_ID)
+
+            data = {}
+            data['BUCKET_NAME'] = BUCKET_NAME
+            data['AWS_ACCESS_KEY_ID'] = AWS_ACCESS_KEY_ID
+            data['AWS_SECRET_ACCESS_KEY'] = AWS_SECRET_ACCESS_KEY
+
+            with open(wasabiFile, 'w') as outfile:
+                json.dump(data, outfile)
+
+            os.chmod(wasabiFile, stat.S_IRUSR | stat.S_IWUSR)
 
             final_dic = {'status': 1}
             final_json = json.dumps(final_dic)
