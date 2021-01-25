@@ -273,11 +273,12 @@ def removeDestination(request):
 
         ipAddress = data['IPAddress']
 
-        if data['type'] == 'SFTP':
+        if data['type'].lower() == IncBackupProvider.SFTP.value.lower():
             ipFile = '/home/cyberpanel/sftp/%s' % (ipAddress)
-        else:
+        if data['type'].lower() == IncBackupProvider.S3.value.lower():
             ipFile = '/home/cyberpanel/aws/%s' % (ipAddress)
-
+        if data['type'].lower() == IncBackupProvider.WASABI.value.lower():
+            ipFile = '/home/cyberpanel/wasabi/%s' % (ipAddress)
 
         os.remove(ipFile)
 
