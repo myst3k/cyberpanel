@@ -211,6 +211,7 @@ def addDestination(request):
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
+
 def populateCurrentRecords(request):
     try:
         userID = request.session['userID']
@@ -220,60 +221,30 @@ def populateCurrentRecords(request):
             return ACLManager.loadErrorJson('fetchStatus', 0)
 
         data = json.loads(request.body)
+        json_data = []
 
         if data['type'].lower() == IncBackupProvider.SFTP.value.lower():
+            path = Path('/home/cyberpanel/sftp')
 
-            path = '/home/cyberpanel/sftp'
-
-            if os.path.exists(path):
-
-                json_data = "["
-                checker = 0
-
-                for items in os.listdir(path):
-                    fullPath = '/home/cyberpanel/sftp/%s' % (items)
-
-                    data = open(fullPath, 'r').readlines()
-                    dic = {
-                        'ip': data[0].strip('\n'),
-                           'port': data[1],
-                           }
-
-                    if checker == 0:
-                        json_data = json_data + json.dumps(dic)
-                        checker = 1
-                    else:
-                        json_data = json_data + ',' + json.dumps(dic)
-            else:
-                final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
-                return HttpResponse(final_json)
+            if path.exists():
+                for item in path.iterdir():
+                    with open(item, 'r') as infile:
+                        _file = infile.readlines()
+                        json_data.append({
+                            'ip': _file[0].strip('\n'),
+                            'port': _file[1],
+                        })
 
         if data['type'].lower() == IncBackupProvider.S3.value.lower():
-            path = '/home/cyberpanel/aws'
+            path = Path('/home/cyberpanel/aws')
 
-            if os.path.exists(path):
-
-                json_data = "["
-                checker = 0
-
-                for items in os.listdir(path):
-                    dic = {
-                        'AWS_ACCESS_KEY_ID': items
-                    }
-
-                    if checker == 0:
-                        json_data = json_data + json.dumps(dic)
-                        checker = 1
-                    else:
-                        json_data = json_data + ',' + json.dumps(dic)
-            else:
-                final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
-                return HttpResponse(final_json)
+            if path.exists():
+                for item in path.iterdir():
+                    json_data.append({'AWS_ACCESS_KEY_ID': item})
 
         if data['type'].lower() == IncBackupProvider.WASABI.value.lower():
             path = Path('/home/cyberpanel/wasabi')
 
-            json_data = []
             if path.exists():
                 for item in path.iterdir():
                     with open(item) as infile:
@@ -281,9 +252,6 @@ def populateCurrentRecords(request):
                         if "AWS_SECRET_ACCESS_KEY" in _json:
                             del _json['AWS_SECRET_ACCESS_KEY']
                         json_data.append(_json)
-            else:
-                final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
-                return HttpResponse(final_json)
 
         final_json = json.dumps({'status': 1, 'error_message': "None", "data": json_data})
         return HttpResponse(final_json)
