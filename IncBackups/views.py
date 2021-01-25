@@ -42,16 +42,23 @@ def createBackup(request):
         destinations = []
         destinations.append('local')
 
-        path = '/home/cyberpanel/sftp'
+        # SFTP Destinations
+        path = Path('/home/cyberpanel/sftp')
+        if path.exists():
+            for item in path.iterdir():
+                destinations.append('SFTP:%s' % item.name)
 
-        if os.path.exists(path):
-            for items in os.listdir(path):
-                destinations.append('sftp:%s' % (items))
+        # AWS Destinations
+        path = Path('/home/cyberpanel/aws')
+        if path.exists():
+            for item in path.iterdir():
+                destinations.append('S3:s3.amazonaws.com/%s' % item.name)
 
-        path = '/home/cyberpanel/aws'
-        if os.path.exists(path):
-            for items in os.listdir(path):
-                destinations.append('s3:s3.amazonaws.com/%s' % (items))
+        # Wasabi Destinations
+        path = Path('/home/cyberpanel/wasabi')
+        if path.exists():
+            for item in path.iterdir():
+                destinations.append('Wasabi:s3.wasabisys.com/%s' % item.name)
 
         return defRenderer(request, 'IncBackups/createBackup.html', {'websiteList': websitesName, 'destinations': destinations})
     except BaseException as msg:
