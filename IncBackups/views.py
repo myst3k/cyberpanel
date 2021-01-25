@@ -1,22 +1,28 @@
 # -*- coding: utf-8 -*-
 
-from django.shortcuts import render
-from plogical.acl import ACLManager
-from django.shortcuts import HttpResponse, redirect
-from plogical.processUtilities import ProcessUtilities
-from plogical.virtualHostUtilities import virtualHostUtilities
 import json
 import os
-from loginSystem.models import Administrator
-from websiteFunctions.models import Websites
-from .models import IncJob, BackupJob, JobSites
-from .IncBackupsControl import IncJobs
-from random import randint
-import time
-from plogical.CyberCPLogFileWriter import CyberCPLogFileWriter as logging
-from loginSystem.views import loadLoginPage
 import stat
+import time
+from random import randint
+from pathlib import Path
+
+from django.shortcuts import HttpResponse, redirect
+from django.shortcuts import render
+
+from loginSystem.models import Administrator
+from loginSystem.views import loadLoginPage
+from plogical.CyberCPLogFileWriter import CyberCPLogFileWriter as logging
+from plogical.acl import ACLManager
+from plogical.processUtilities import ProcessUtilities
+from plogical.virtualHostUtilities import virtualHostUtilities
+from websiteFunctions.models import Websites
 from .IncBackupProvider import IncBackupProvider
+from .IncBackupsControl import IncJobs
+from .models import IncJob, BackupJob, JobSites
+
+
+
 # Create your views here.
 
 
@@ -215,7 +221,7 @@ def populateCurrentRecords(request):
 
         data = json.loads(request.body)
 
-        if data['type'] == 'SFTP':
+        if data['type'].lower() == IncBackupProvider.SFTP.value.lower():
 
             path = '/home/cyberpanel/sftp'
 
@@ -241,7 +247,8 @@ def populateCurrentRecords(request):
             else:
                 final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
                 return HttpResponse(final_json)
-        else:
+
+        if data['type'].lower() == IncBackupProvider.S3.value.lower():
             path = '/home/cyberpanel/aws'
 
             if os.path.exists(path):
@@ -263,7 +270,18 @@ def populateCurrentRecords(request):
                 final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
                 return HttpResponse(final_json)
 
-        json_data = json_data + ']'
+        if data['type'].lower() == IncBackupProvider.WASABI.value.lower():
+            path = Path('/home/cyberpanel/wasabi')
+
+            json_data = []
+            if path.exists():
+                for item in path.iterdir():
+                    with open(item) as infile:
+                        json_data.append(json.load(infile))
+            else:
+                final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
+                return HttpResponse(final_json)
+
         final_json = json.dumps({'status': 1, 'error_message': "None", "data": json_data})
         return HttpResponse(final_json)
 

@@ -206,7 +206,7 @@
                                         </thead>
                                         <tbody>
                                         <tr ng-repeat="record in records track by $index">
-                                            <td ng-bind="record.bucket"></td>
+                                            <td ng-bind="record.BUCKET_NAME"></td>
                                             <td ng-bind="record.AWS_ACCESS_KEY_ID"></td>
                                             <td ng-click="removeDestination('Wasabi', record.AWS_ACCESS_KEY_ID)"><img
                                                     src="{% static 'images/delete.png' %}">
