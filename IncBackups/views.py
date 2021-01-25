@@ -240,7 +240,7 @@ def populateCurrentRecords(request):
 
             if path.exists():
                 for item in path.iterdir():
-                    json_data.append({'AWS_ACCESS_KEY_ID': item})
+                    json_data.append({'AWS_ACCESS_KEY_ID': item.name})
 
         if data['type'].lower() == IncBackupProvider.WASABI.value.lower():
             path = Path('/home/cyberpanel/wasabi')
