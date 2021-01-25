@@ -277,10 +277,10 @@ def populateCurrentRecords(request):
             if path.exists():
                 for item in path.iterdir():
                     with open(item) as infile:
-                        __json = json.load(infile)
-                        if "AWS_SECRET_ACCESS_KEY" in __json:
-                            del __json['AWS_SECRET_ACCESS_KEY']
-                        json_data.append(json)
+                        _json = json.load(infile)
+                        if "AWS_SECRET_ACCESS_KEY" in _json:
+                            del _json['AWS_SECRET_ACCESS_KEY']
+                        json_data.append(_json)
             else:
                 final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
                 return HttpResponse(final_json)
