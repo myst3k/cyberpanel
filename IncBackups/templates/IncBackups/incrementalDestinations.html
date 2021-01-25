@@ -214,13 +214,15 @@
                                         <thead>
                                         <tr>
                                             <th>{% trans "Bucket Name" %}</th>
-                                            <th>{% trans "AWS_ACCESS_KEY_ID" %}</th>
+                                            <th>{% trans "Region" %}</th>
+                                            <th>{% trans "Access Key" %}</th>
                                             <th>{% trans "Delete" %}</th>
                                         </tr>
                                         </thead>
                                         <tbody>
                                         <tr ng-repeat="record in records track by $index">
                                             <td ng-bind="record.BUCKET_NAME"></td>
+                                            <td ng-bind="record.REGION"></td>
                                             <td ng-bind="record.AWS_ACCESS_KEY_ID"></td>
                                             <td ng-click="removeDestination('Wasabi', record.BUCKET_NAME + '-' + record.AWS_ACCESS_KEY_ID)"><img
                                                     src="{% static 'images/delete.png' %}">
