@@ -372,6 +372,8 @@ app.controller('incrementalDestinations', function ($scope, $http) {
         function ListInitialDatas(response) {
             $scope.cyberpanelLoading = true;
             if (response.data.status === 1) {
+                console.log(response.data)
+                console.log(response.data.data)
                 $scope.records = JSON.parse(response.data.data);
             } else {
                 new PNotify({
