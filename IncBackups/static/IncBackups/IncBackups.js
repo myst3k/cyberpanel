@@ -419,6 +419,7 @@ app.controller('incrementalDestinations', function ($scope, $http) {
             data = {
                 type: type,
                 BUCKET_NAME: $scope.BUCKET_NAME,
+                REGION: $scope.REGION,
                 AWS_ACCESS_KEY_ID: $scope.AWS_ACCESS_KEY_ID,
                 AWS_SECRET_ACCESS_KEY: $scope.AWS_SECRET_ACCESS_KEY,
             };

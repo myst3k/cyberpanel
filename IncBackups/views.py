@@ -74,9 +74,7 @@ def backupDestinations(request):
         if ACLManager.currentContextPermission(currentACL, 'addDeleteDestinations') == 0:
             return ACLManager.loadError()
 
-        wasabi_regions = IncBackupWasabiRegion.list_names()
-
-        return defRenderer(request, 'IncBackups/incrementalDestinations.html', {'wasabi_regions': wasabi_regions})
+        return defRenderer(request, 'IncBackups/incrementalDestinations.html', {})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
@@ -197,6 +195,7 @@ def addDestination(request):
                 pass
 
             BUCKET_NAME = data['BUCKET_NAME']
+            REGION = data['REGION']
             AWS_ACCESS_KEY_ID = data['AWS_ACCESS_KEY_ID']
             AWS_SECRET_ACCESS_KEY = data['AWS_SECRET_ACCESS_KEY']
 
@@ -204,6 +203,7 @@ def addDestination(request):
 
             data = {}
             data['BUCKET_NAME'] = BUCKET_NAME
+            data['REGION'] = REGION
             data['AWS_ACCESS_KEY_ID'] = AWS_ACCESS_KEY_ID
             data['AWS_SECRET_ACCESS_KEY'] = AWS_SECRET_ACCESS_KEY
 
