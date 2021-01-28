@@ -35,7 +35,7 @@ def createBackup(request):
         if ACLManager.currentContextPermission(current_acl, 'createBackup') == 0:
             return ACLManager.loadError()
 
-        websitesName = ACLManager.findAllSites(current_acl, user_id)
+        websites = ACLManager.findAllSites(current_acl, user_id)
 
         destinations = ['local']
 
@@ -50,17 +50,18 @@ def createBackup(request):
                 destinations.append('s3:s3.amazonaws.com/%s' % item.name)
 
         return defRenderer(request, 'IncBackups/createBackup.html',
-                           {'websiteList': websitesName, 'destinations': destinations})
+                           {'websiteList': websites, 'destinations': destinations})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
 
+
 def backupDestinations(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
 
-        if ACLManager.currentContextPermission(currentACL, 'addDeleteDestinations') == 0:
+        if ACLManager.currentContextPermission(current_acl, 'addDeleteDestinations') == 0:
             return ACLManager.loadError()
 
         return defRenderer(request, 'IncBackups/incrementalDestinations.html', {})
@@ -164,65 +165,43 @@ def addDestination(request):
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
+
 def populateCurrentRecords(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
 
-        if ACLManager.currentContextPermission(currentACL, 'addDeleteDestinations') == 0:
+        if ACLManager.currentContextPermission(current_acl, 'addDeleteDestinations') == 0:
             return ACLManager.loadErrorJson('fetchStatus', 0)
 
         data = json.loads(request.body)
 
-        if data['type'] == 'SFTP':
+        json_data = []
+        if data['type'].lower() == IncBackupProvider.SFTP.name.lower():
+            path = Path(IncBackupPath.SFTP.value)
 
-            path = '/home/cyberpanel/sftp'
-
-            if os.path.exists(path):
-
-                json_data = "["
-                checker = 0
-
-                for items in os.listdir(path):
-                    fullPath = '/home/cyberpanel/sftp/%s' % (items)
-
-                    data = open(fullPath, 'r').readlines()
-                    dic = {
-                        'ip': data[0].strip('\n'),
-                           'port': data[1],
-                           }
-
-                    if checker == 0:
-                        json_data = json_data + json.dumps(dic)
-                        checker = 1
-                    else:
-                        json_data = json_data + ',' + json.dumps(dic)
-            else:
-                final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
-                return HttpResponse(final_json)
-        else:
-            path = '/home/cyberpanel/aws'
-
-            if os.path.exists(path):
-
-                json_data = "["
-                checker = 0
-
-                for items in os.listdir(path):
-                    dic = {
-                        'AWS_ACCESS_KEY_ID': items
-                    }
-
-                    if checker == 0:
-                        json_data = json_data + json.dumps(dic)
-                        checker = 1
-                    else:
-                        json_data = json_data + ',' + json.dumps(dic)
+            if path.exists():
+                for item in path.iterdir():
+                    with open(item, 'r') as infile:
+                        _file = infile.readlines()
+                        json_data.append({
+                            'ip': _file[0].strip('\n'),
+                            'port': _file[1],
+                        })
             else:
                 final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
                 return HttpResponse(final_json)
 
-        json_data = json_data + ']'
+        if data['type'].lower() == IncBackupProvider.AWS.name.lower():
+            path = Path(IncBackupPath.AWS.value)
+
+            if path.exists():
+                for item in path.iterdir():
+                    json_data.append({'AWS_ACCESS_KEY_ID': item.name})
+            else:
+                final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
+                return HttpResponse(final_json)
+
         final_json = json.dumps({'status': 1, 'error_message': "None", "data": json_data})
         return HttpResponse(final_json)
 
