@@ -210,25 +210,27 @@ def populateCurrentRecords(request):
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
+
 def removeDestination(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
 
-        if ACLManager.currentContextPermission(currentACL, 'addDeleteDestinations') == 0:
+        if ACLManager.currentContextPermission(current_acl, 'addDeleteDestinations') == 0:
             return ACLManager.loadErrorJson('destStatus', 0)
 
         data = json.loads(request.body)
 
-        ipAddress = data['IPAddress']
+        if 'IPAddress' in data:
+            file_name = data['IPAddress']
 
-        if data['type'] == 'SFTP':
-            ipFile = '/home/cyberpanel/sftp/%s' % (ipAddress)
-        else:
-            ipFile = '/home/cyberpanel/aws/%s' % (ipAddress)
+            if data['type'].lower() == IncBackupProvider.SFTP.name.lower():
+                dest_file = Path(IncBackupPath.SFTP.value) / file_name
+                dest_file.unlink()
 
-
-        os.remove(ipFile)
+            if data['type'].lower() == IncBackupProvider.AWS.name.lower():
+                dest_file = Path(IncBackupPath.AWS.value) / file_name
+                dest_file.unlink()
 
         final_dic = {'status': 1, 'error_message': 'None'}
         final_json = json.dumps(final_dic)
@@ -238,6 +240,7 @@ def removeDestination(request):
         final_dic = {'destStatus': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
+
 
 def fetchCurrentBackups(request):
     try:
@@ -312,6 +315,7 @@ def fetchCurrentBackups(request):
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
+
 def submitBackupCreation(request):
     try:
         userID = request.session['userID']
@@ -344,7 +348,6 @@ def submitBackupCreation(request):
         except:
             websiteSSLs = False
 
-
         try:
             websiteDatabases = data['websiteDatabases']
         except:
@@ -364,7 +367,7 @@ def submitBackupCreation(request):
 
         time.sleep(2)
 
-        final_json = json.dumps({'status': 1,  'error_message': "None", 'tempPath': tempPath})
+        final_json = json.dumps({'status': 1, 'error_message': "None", 'tempPath': tempPath})
         return HttpResponse(final_json)
 
     except BaseException as msg:
@@ -372,6 +375,7 @@ def submitBackupCreation(request):
         final_dic = {'status': 0, 'metaStatus': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
+
 
 def getBackupStatus(request):
     try:
@@ -440,6 +444,7 @@ def getBackupStatus(request):
         logging.writeToFile(str(msg) + " [backupStatus]")
         return HttpResponse(final_json)
 
+
 def deleteBackup(request):
     try:
         userID = request.session['userID']
@@ -465,6 +470,7 @@ def deleteBackup(request):
         final_dic = {'destStatus': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
+
 
 def fetchRestorePoints(request):
     try:
@@ -511,6 +517,7 @@ def fetchRestorePoints(request):
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
+
 def restorePoint(request):
     try:
         userID = request.session['userID']
@@ -544,14 +551,12 @@ def restorePoint(request):
             extraArgs['tempPath'] = tempPath
             extraArgs['reconstruct'] = data['reconstruct']
 
-
         startJob = IncJobs('restorePoint', extraArgs)
         startJob.start()
 
-
         time.sleep(2)
 
-        final_json = json.dumps({'status': 1,  'error_message': "None", 'tempPath': tempPath})
+        final_json = json.dumps({'status': 1, 'error_message': "None", 'tempPath': tempPath})
         return HttpResponse(final_json)
 
     except BaseException as msg:
@@ -559,6 +564,7 @@ def restorePoint(request):
         final_dic = {'status': 0, 'metaStatus': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
+
 
 def scheduleBackups(request):
     try:
@@ -586,10 +592,12 @@ def scheduleBackups(request):
 
         websitesName = ACLManager.findAllSites(currentACL, userID)
 
-        return defRenderer(request, 'IncBackups/backupSchedule.html', {'websiteList': websitesName, 'destinations': destinations})
+        return defRenderer(request, 'IncBackups/backupSchedule.html',
+                           {'websiteList': websitesName, 'destinations': destinations})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
+
 
 def submitBackupSchedule(request):
     try:
@@ -626,7 +634,8 @@ def submitBackupSchedule(request):
             websiteDatabases = False
             websiteDatabases = 0
 
-        newJob = BackupJob(websiteData=websiteData, websiteDataEmails=websiteEmails, websiteDatabases=websiteDatabases, destination=backupDest, frequency=backupFreq)
+        newJob = BackupJob(websiteData=websiteData, websiteDataEmails=websiteEmails, websiteDatabases=websiteDatabases,
+                           destination=backupDest, frequency=backupFreq)
         newJob.save()
 
         for items in websitesToBeBacked:
@@ -640,6 +649,7 @@ def submitBackupSchedule(request):
     except BaseException as msg:
         final_json = json.dumps({'status': 0, 'error_message': str(msg)})
         return HttpResponse(final_json)
+
 
 def getCurrentBackupSchedules(request):
     try:
@@ -675,6 +685,7 @@ def getCurrentBackupSchedules(request):
         final_dic = {'status': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
+
 
 def fetchSites(request):
     try:
@@ -713,6 +724,7 @@ def fetchSites(request):
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
+
 def scheduleDelete(request):
     try:
         userID = request.session['userID']
@@ -734,6 +746,7 @@ def scheduleDelete(request):
     except BaseException as msg:
         final_json = json.dumps({'status': 0, 'error_message': str(msg)})
         return HttpResponse(final_json)
+
 
 def restoreRemoteBackups(request):
     try:
@@ -758,10 +771,12 @@ def restoreRemoteBackups(request):
             for items in os.listdir(path):
                 destinations.append('s3:s3.amazonaws.com/%s' % (items))
 
-        return defRenderer(request, 'IncBackups/restoreRemoteBackups.html', {'websiteList': websitesName, 'destinations': destinations})
+        return defRenderer(request, 'IncBackups/restoreRemoteBackups.html',
+                           {'websiteList': websitesName, 'destinations': destinations})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
+
 
 def saveChanges(request):
     try:
@@ -802,6 +817,7 @@ def saveChanges(request):
         final_json = json.dumps({'status': 0, 'error_message': str(msg)})
         return HttpResponse(final_json)
 
+
 def removeSite(request):
     try:
         userID = request.session['userID']
@@ -814,7 +830,6 @@ def removeSite(request):
 
         id = data['id']
         website = data['website']
-
 
         job = BackupJob.objects.get(pk=id)
 
@@ -829,6 +844,7 @@ def removeSite(request):
         final_json = json.dumps({'status': 0, 'error_message': str(msg)})
         return HttpResponse(final_json)
 
+
 def addWebsite(request):
     try:
         userID = request.session['userID']
@@ -841,7 +857,6 @@ def addWebsite(request):
 
         id = data['id']
         website = data['website']
-
 
         job = BackupJob.objects.get(pk=id)
 
