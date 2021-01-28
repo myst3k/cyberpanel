@@ -1,23 +1,25 @@
 # -*- coding: utf-8 -*-
 
-from django.shortcuts import render
-from plogical.acl import ACLManager
-from django.shortcuts import HttpResponse, redirect
-from plogical.processUtilities import ProcessUtilities
-from plogical.virtualHostUtilities import virtualHostUtilities
 import json
 import os
-from loginSystem.models import Administrator
-from websiteFunctions.models import Websites
-from .models import IncJob, BackupJob, JobSites
-from .IncBackupsControl import IncJobs
-from random import randint
-import time
-from plogical.CyberCPLogFileWriter import CyberCPLogFileWriter as logging
-from loginSystem.views import loadLoginPage
 import stat
-from .IncBackupProvider import IncBackupProvider
+import time
 from pathlib import Path
+from random import randint
+
+from django.shortcuts import HttpResponse, redirect
+from django.shortcuts import render
+
+from loginSystem.models import Administrator
+from loginSystem.views import loadLoginPage
+from plogical.CyberCPLogFileWriter import CyberCPLogFileWriter as logging
+from plogical.acl import ACLManager
+from plogical.processUtilities import ProcessUtilities as pu
+from plogical.virtualHostUtilities import virtualHostUtilities as vhu
+from websiteFunctions.models import Websites
+from .IncBackupProvider import IncBackupProvider
+from .IncBackupsControl import IncJobs
+from .models import IncJob, BackupJob, JobSites
 
 
 def defRenderer(request, templateName, args):
@@ -92,19 +94,19 @@ def addDestination(request):
                 return HttpResponse(final_json)
 
             python_path = Path('/usr/local/CyberCP/bin/python')
-            backup_utils = Path(virtualHostUtilities.cyberPanel) / "plogical/backupUtilities.py"
+            backup_utils = Path(vhu.cyberPanel) / "plogical/backupUtilities.py"
 
             exec_args = "submitDestinationCreation --ipAddress %s --password %s --port %s --user %s" % \
                         (ip_address, password, port, 'root')
 
             exec_cmd = "%s %s %s" % (python_path, backup_utils, exec_args)
 
-            if Path(ProcessUtilities.debugPath).exists():
+            if Path(pu.debugPath).exists():
                 logging.writeToFile(exec_cmd)
 
-            output = ProcessUtilities.outputExecutioner(exec_cmd)
+            output = pu.outputExecutioner(exec_cmd)
 
-            if Path(ProcessUtilities.debugPath).exists():
+            if Path(pu.debugPath).exists():
                 logging.writeToFile(output)
 
             if output.find('1,') > -1:
@@ -113,7 +115,7 @@ def addDestination(request):
                     outfile.write(content)
 
                 command = 'cat /root/.ssh/config'
-                current_config = ProcessUtilities.outputExecutioner(command)
+                current_config = pu.outputExecutioner(command)
 
                 tmp_file = '/home/cyberpanel/sshconfig'
                 with open(tmp_file, 'w') as outfile:
@@ -127,10 +129,10 @@ def addDestination(request):
                         outfile.write(content)
 
                 command = 'mv %s /root/.ssh/config' % tmp_file
-                ProcessUtilities.executioner(command)
+                pu.executioner(command)
 
                 command = 'chown root:root /root/.ssh/config'
-                ProcessUtilities.executioner(command)
+                pu.executioner(command)
 
                 final_dic = {'status': 1, 'error_message': 'None'}
             else:
@@ -420,7 +422,7 @@ def getBackupStatus(request):
 
         if os.path.exists(status):
             command = "cat " + status
-            result = ProcessUtilities.outputExecutioner(command, 'cyberpanel')
+            result = pu.outputExecutioner(command, 'cyberpanel')
 
             if result.find("Completed") > -1:
 
