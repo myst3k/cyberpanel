@@ -90,14 +90,18 @@ def addDestination(request):
                 final_json = json.dumps(final_dic)
                 return HttpResponse(final_json)
 
-            exec_path = "/usr/local/CyberCP/bin/python " + virtualHostUtilities.cyberPanel + "/plogical/backupUtilities.py"
-            exec_path = exec_path + " submitDestinationCreation --ipAddress " + ip_address + " --password " \
-                        + password + " --port " + port + ' --user %s' % 'root'
+            python_path = Path('/usr/local/CyberCP/bin/python')
+            backup_utils = Path(virtualHostUtilities.cyberPanel) / "plogical/backupUtilities.py"
+
+            exec_args = "submitDestinationCreation --ipAddress %s --password %s --port %s --user %s" % \
+                        (ip_address, password, port, 'root')
+
+            exec_cmd = "%s %s %s" % (python_path, backup_utils, exec_args)
 
             if Path(ProcessUtilities.debugPath).exists():
-                logging.writeToFile(exec_path)
+                logging.writeToFile(exec_cmd)
 
-            output = ProcessUtilities.outputExecutioner(exec_path)
+            output = ProcessUtilities.outputExecutioner(exec_cmd)
 
             if Path(ProcessUtilities.debugPath).exists():
                 logging.writeToFile(output)
