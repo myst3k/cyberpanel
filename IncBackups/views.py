@@ -16,7 +16,8 @@ import time
 from plogical.CyberCPLogFileWriter import CyberCPLogFileWriter as logging
 from loginSystem.views import loadLoginPage
 import stat
-# Create your views here.
+from .IncBackupProvider import IncBackupProvider
+from pathlib import Path
 
 
 def defRenderer(request, templateName, args):
@@ -74,100 +75,77 @@ def addDestination(request):
 
         data = json.loads(request.body)
 
-        if data['type'] == 'SFTP':
+        if data['type'].lower() == IncBackupProvider.SFTP.name.lower():
+            path = Path('/home/cyberpanel/sftp')
+            path.mkdir(exist_ok=True)
 
-            ipAddress = data['IPAddress']
+            ip_address = data['IPAddress']
             password = data['password']
 
-            ipFile = '/home/cyberpanel/sftp/%s' % (ipAddress)
+            address_file = path / ip_address
+            port = data.get('backupSSHPort', '22')
 
-            try:
-                port = data['backupSSHPort']
-            except:
-                port = "22"
-
-            if os.path.exists(ipFile):
+            if address_file.exists():
                 final_dic = {'status': 0, 'error_message': 'This destination already exists.'}
                 final_json = json.dumps(final_dic)
                 return HttpResponse(final_json)
 
+            exec_path = "/usr/local/CyberCP/bin/python " + virtualHostUtilities.cyberPanel + "/plogical/backupUtilities.py"
+            exec_path = exec_path + " submitDestinationCreation --ipAddress " + ip_address + " --password " \
+                        + password + " --port " + port + ' --user %s' % 'root'
 
-            try:
-                os.mkdir('/home/cyberpanel/sftp')
-            except:
-                pass
+            if Path(ProcessUtilities.debugPath).exists():
+                logging.writeToFile(exec_path)
 
+            output = ProcessUtilities.outputExecutioner(exec_path)
 
-            execPath = "/usr/local/CyberCP/bin/python " + virtualHostUtilities.cyberPanel + "/plogical/backupUtilities.py"
-            execPath = execPath + " submitDestinationCreation --ipAddress " + ipAddress + " --password " \
-                       + password + " --port " + port + ' --user %s' % ('root')
-
-            if os.path.exists(ProcessUtilities.debugPath):
-                logging.writeToFile(execPath)
-
-            output = ProcessUtilities.outputExecutioner(execPath)
-
-            if os.path.exists(ProcessUtilities.debugPath):
+            if Path(ProcessUtilities.debugPath).exists():
                 logging.writeToFile(output)
 
             if output.find('1,') > -1:
-
-                content = '%s\n%s' % (ipAddress, port)
-                writeToFile = open(ipFile, 'w')
-                writeToFile.write(content)
-                writeToFile.close()
+                content = '%s\n%s' % (ip_address, port)
+                with open(address_file, 'w') as outfile:
+                    outfile.write(content)
 
                 command = 'cat /root/.ssh/config'
-                currentConfig = ProcessUtilities.outputExecutioner(command)
+                current_config = ProcessUtilities.outputExecutioner(command)
 
-                tmpFile = '/home/cyberpanel/sshconfig'
+                tmp_file = '/home/cyberpanel/sshconfig'
+                with open(tmp_file, 'w') as outfile:
+                    if current_config.find('cat') == -1:
+                        outfile.write(current_config)
 
-                writeToFile = open(tmpFile, 'w')
-                if currentConfig.find('cat') == -1:
-                    writeToFile.write(currentConfig)
+                    content = "Host %s\n"\
+                              "    IdentityFile ~/.ssh/cyberpanel\n"\
+                              "    Port %s\n" % (ip_address, port)
+                    if current_config.find(ip_address) == -1:
+                        outfile.write(content)
 
-                content = """Host %s
-    IdentityFile ~/.ssh/cyberpanel
-    Port %s
-""" % (ipAddress, port)
-                if currentConfig.find(ipAddress) == -1:
-                    writeToFile.write(content)
-                writeToFile.close()
-
-
-                command = 'mv %s /root/.ssh/config' % (tmpFile)
+                command = 'mv %s /root/.ssh/config' % tmp_file
                 ProcessUtilities.executioner(command)
 
                 command = 'chown root:root /root/.ssh/config'
                 ProcessUtilities.executioner(command)
 
                 final_dic = {'status': 1, 'error_message': 'None'}
-                final_json = json.dumps(final_dic)
-                return HttpResponse(final_json)
-
-
             else:
                 final_dic = {'status': 0, 'error_message': output}
-                final_json = json.dumps(final_dic)
-                return HttpResponse(final_json)
-        else:
-            aws = '/home/cyberpanel/aws'
+            final_json = json.dumps(final_dic)
+            return HttpResponse(final_json)
 
-            try:
-                os.mkdir(aws)
-            except:
-                pass
+        if data['type'].lower() == IncBackupProvider.AWS.name.lower():
+            path = Path('/home/cyberpanel/aws')
+            path.mkdir(exist_ok=True)
 
-            AWS_ACCESS_KEY_ID = data['AWS_ACCESS_KEY_ID']
-            AWS_SECRET_ACCESS_KEY = data['AWS_SECRET_ACCESS_KEY']
+            access_key = data['AWS_ACCESS_KEY_ID']
+            secret_key = data['AWS_SECRET_ACCESS_KEY']
 
-            awsFile = '/home/cyberpanel/aws/%s' % (AWS_ACCESS_KEY_ID)
+            aws_file = path / access_key
 
-            writeToFile = open(awsFile, 'w')
-            writeToFile.write(AWS_SECRET_ACCESS_KEY)
-            writeToFile.close()
+            with open(aws_file, 'w') as outfile:
+                outfile.write(secret_key)
 
-            os.chmod(awsFile, stat.S_IRUSR | stat.S_IWUSR)
+            aws_file.chmod(stat.S_IRUSR | stat.S_IWUSR)
 
             final_dic = {'status': 1}
             final_json = json.dumps(final_dic)
