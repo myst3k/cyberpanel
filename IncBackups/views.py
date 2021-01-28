@@ -65,12 +65,13 @@ def backupDestinations(request):
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
 
+
 def addDestination(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
 
-        if ACLManager.currentContextPermission(currentACL, 'addDeleteDestinations') == 0:
+        if ACLManager.currentContextPermission(current_acl, 'addDeleteDestinations') == 0:
             return ACLManager.loadErrorJson('destStatus', 0)
 
         data = json.loads(request.body)
@@ -119,8 +120,8 @@ def addDestination(request):
                     if current_config.find('cat') == -1:
                         outfile.write(current_config)
 
-                    content = "Host %s\n"\
-                              "    IdentityFile ~/.ssh/cyberpanel\n"\
+                    content = "Host %s\n" \
+                              "    IdentityFile ~/.ssh/cyberpanel\n" \
                               "    Port %s\n" % (ip_address, port)
                     if current_config.find(ip_address) == -1:
                         outfile.write(content)
