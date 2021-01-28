@@ -18,6 +18,7 @@ from plogical.processUtilities import ProcessUtilities as pu
 from plogical.virtualHostUtilities import virtualHostUtilities as vhu
 from websiteFunctions.models import Websites
 from .IncBackupProvider import IncBackupProvider
+from .IncBackupPath import IncBackupPath
 from .IncBackupsControl import IncJobs
 from .models import IncJob, BackupJob, JobSites
 
@@ -25,31 +26,31 @@ from .models import IncJob, BackupJob, JobSites
 def defRenderer(request, templateName, args):
     return render(request, templateName, args)
 
+
 def createBackup(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
 
-        if ACLManager.currentContextPermission(currentACL, 'createBackup') == 0:
+        if ACLManager.currentContextPermission(current_acl, 'createBackup') == 0:
             return ACLManager.loadError()
 
-        websitesName = ACLManager.findAllSites(currentACL, userID)
+        websitesName = ACLManager.findAllSites(current_acl, user_id)
 
-        destinations = []
-        destinations.append('local')
+        destinations = ['local']
 
-        path = '/home/cyberpanel/sftp'
+        path = Path(IncBackupPath.SFTP.value)
+        if path.exists():
+            for item in path.iterdir():
+                destinations.append('sftp:%s' % item.name)
 
+        path = Path(IncBackupPath.AWS.value)
         if os.path.exists(path):
-            for items in os.listdir(path):
-                destinations.append('sftp:%s' % (items))
+            for item in path.iterdir():
+                destinations.append('s3:s3.amazonaws.com/%s' % item.name)
 
-        path = '/home/cyberpanel/aws'
-        if os.path.exists(path):
-            for items in os.listdir(path):
-                destinations.append('s3:s3.amazonaws.com/%s' % (items))
-
-        return defRenderer(request, 'IncBackups/createBackup.html', {'websiteList': websitesName, 'destinations': destinations})
+        return defRenderer(request, 'IncBackups/createBackup.html',
+                           {'websiteList': websitesName, 'destinations': destinations})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
