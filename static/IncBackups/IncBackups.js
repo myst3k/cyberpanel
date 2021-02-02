@@ -358,7 +358,7 @@ app.controller('incrementalDestinations', function ($scope, $http) {
         function ListInitialDatas(response) {
             $scope.cyberpanelLoading = true;
             if (response.data.status === 1) {
-                $scope.records = JSON.parse(response.data.data);
+                $scope.records = response.data.data;
             } else {
                 new PNotify({
                     title: 'Operation Failed!',
@@ -1074,7 +1074,7 @@ app.controller('restoreRemoteBackupsInc', function ($scope, $http, $timeout) {
         function ListInitialDatas(response) {
             $scope.cyberpanelLoading = true;
             if (response.data.status === 1) {
-                $scope.records = JSON.parse(response.data.data);
+                $scope.records = response.data.data;
             } else {
                 new PNotify({
                     title: 'Error!',
