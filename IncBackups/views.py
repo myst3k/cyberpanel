@@ -244,72 +244,45 @@ def removeDestination(request):
 
 def fetchCurrentBackups(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-        admin = Administrator.objects.get(pk=userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
+        admin = Administrator.objects.get(pk=user_id)
 
         data = json.loads(request.body)
-        backupDomain = data['websiteToBeBacked']
+        backup_domain = data['websiteToBeBacked']
 
-        if ACLManager.checkOwnership(backupDomain, admin, currentACL) == 1:
+        if ACLManager.checkOwnership(backup_domain, admin, current_acl) == 1:
             pass
         else:
             return ACLManager.loadErrorJson('fetchStatus', 0)
 
-        if ACLManager.checkOwnership(backupDomain, admin, currentACL) == 1:
-            pass
-        else:
-            return ACLManager.loadErrorJson()
+        if 'backupDestinations' in data:
+            backup_destinations = data['backupDestinations']
+            extra_args = {'website': backup_domain, 'backupDestinations': backup_destinations}
 
-        try:
-            backupDestinations = data['backupDestinations']
-
-            extraArgs = {}
-            extraArgs['website'] = backupDomain
-            extraArgs['backupDestinations'] = backupDestinations
-            try:
-                extraArgs['password'] = data['password']
-            except:
+            if 'password' in data:
+                extra_args['password'] = data['password']
+            else:
                 final_json = json.dumps({'status': 0, 'error_message': "Please supply the password."})
                 return HttpResponse(final_json)
 
-            startJob = IncJobs('Dummpy', extraArgs)
-            return startJob.fetchCurrentBackups()
-
-        except:
-
-            website = Websites.objects.get(domain=backupDomain)
-
+            start_job = IncJobs('Dummy', extra_args)
+            return start_job.fetchCurrentBackups()
+        else:
+            website = Websites.objects.get(domain=backup_domain)
             backups = website.incjob_set.all()
-
-            json_data = "["
-            checker = 0
-
-            for items in reversed(backups):
-
-                includes = ""
-
-                jobs = items.jobsnapshots_set.all()
-
+            json_data = []
+            for backup in reversed(backups):
+                snapshots = []
+                jobs = backup.jobsnapshots_set.all()
                 for job in jobs:
-                    includes = '%s,%s:%s' % (includes, job.type, job.snapshotid)
-
-                dic = {'id': items.id,
-                       'date': str(items.date),
-                       'includes': includes
-                       }
-
-                if checker == 0:
-                    json_data = json_data + json.dumps(dic)
-                    checker = 1
-                else:
-                    json_data = json_data + ',' + json.dumps(dic)
-
-            json_data = json_data + ']'
+                    snapshots.append({'type': job.type, 'snapshotid': job.snapshotid, 'destination': job.destination})
+                json_data.append({'id': backup.id,
+                                  'date': str(backup.date),
+                                  'snapshots': snapshots
+                                  })
             final_json = json.dumps({'status': 1, 'error_message': "None", "data": json_data})
             return HttpResponse(final_json)
-
-
     except BaseException as msg:
         final_dic = {'status': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
