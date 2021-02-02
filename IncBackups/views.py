@@ -81,7 +81,7 @@ def addDestination(request):
         data = json.loads(request.body)
 
         if data['type'].lower() == IncBackupProvider.SFTP.name.lower():
-            path = Path('/home/cyberpanel/sftp')
+            path = Path(IncBackupPath.SFTP.value)
             path.mkdir(exist_ok=True)
 
             ip_address = data['IPAddress']
@@ -143,7 +143,7 @@ def addDestination(request):
             return HttpResponse(final_json)
 
         if data['type'].lower() == IncBackupProvider.AWS.name.lower():
-            path = Path('/home/cyberpanel/aws')
+            path = Path(IncBackupPath.AWS.value)
             path.mkdir(exist_ok=True)
 
             access_key = data['AWS_ACCESS_KEY_ID']
@@ -291,56 +291,36 @@ def fetchCurrentBackups(request):
 
 def submitBackupCreation(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-        admin = Administrator.objects.get(pk=userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
+        admin = Administrator.objects.get(pk=user_id)
 
         data = json.loads(request.body)
-        backupDomain = data['websiteToBeBacked']
-        backupDestinations = data['backupDestinations']
+        backup_domain = data['websiteToBeBacked']
+        backup_destinations = data['backupDestinations']
 
-        if ACLManager.checkOwnership(backupDomain, admin, currentACL) == 1:
+        if ACLManager.checkOwnership(backup_domain, admin, current_acl) == 1:
             pass
         else:
             return ACLManager.loadErrorJson('metaStatus', 0)
 
-        tempPath = "/home/cyberpanel/" + str(randint(1000, 9999))
+        temp_path = Path("/home/cyberpanel/") / str(randint(1000, 9999))
 
-        try:
-            websiteData = data['websiteData']
-        except:
-            websiteData = False
+        extra_args = {}
+        extra_args['website'] = backup_domain
+        extra_args['tempPath'] = temp_path.as_posix()
+        extra_args['backupDestinations'] = backup_destinations
+        extra_args['websiteData'] = data['websiteData'] if 'websiteData' in data else False
+        extra_args['websiteEmails'] = data['websiteEmails'] if 'websiteEmails' in data else False
+        extra_args['websiteSSLs'] = data['websiteSSLs'] if 'websiteSSLs' in data else False
+        extra_args['websiteDatabases'] = data['websiteDatabases'] if 'websiteDatabases' in data else False
 
-        try:
-            websiteEmails = data['websiteEmails']
-        except:
-            websiteEmails = False
-
-        try:
-            websiteSSLs = data['websiteSSLs']
-        except:
-            websiteSSLs = False
-
-        try:
-            websiteDatabases = data['websiteDatabases']
-        except:
-            websiteDatabases = False
-
-        extraArgs = {}
-        extraArgs['website'] = backupDomain
-        extraArgs['tempPath'] = tempPath
-        extraArgs['backupDestinations'] = backupDestinations
-        extraArgs['websiteData'] = websiteData
-        extraArgs['websiteEmails'] = websiteEmails
-        extraArgs['websiteSSLs'] = websiteSSLs
-        extraArgs['websiteDatabases'] = websiteDatabases
-
-        startJob = IncJobs('createBackup', extraArgs)
-        startJob.start()
+        start_job = IncJobs('createBackup', extra_args)
+        start_job.start()
 
         time.sleep(2)
 
-        final_json = json.dumps({'status': 1, 'error_message': "None", 'tempPath': tempPath})
+        final_json = json.dumps({'status': 1, 'error_message': "None", 'tempPath': temp_path})
         return HttpResponse(final_json)
 
     except BaseException as msg:
