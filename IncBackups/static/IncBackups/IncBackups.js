@@ -101,7 +101,7 @@ app.controller('createIncrementalBackups', function ($scope, $http, $timeout) {
 
         function ListInitialDatas(response) {
             if (response.data.status === 1) {
-                $scope.records = JSON.parse(response.data.data);
+                $scope.records = response.data.data;
             } else {
                 new PNotify({
                     title: 'Error!',
