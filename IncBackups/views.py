@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import json
 import os
 import stat
@@ -23,11 +21,11 @@ from .IncBackupsControl import IncJobs
 from .models import IncJob, BackupJob, JobSites
 
 
-def defRenderer(request, templateName, args):
+def def_renderer(request, templateName, args):
     return render(request, templateName, args)
 
 
-def createBackup(request):
+def create_backup(request):
     try:
         user_id = request.session['userID']
         current_acl = ACLManager.loadedACL(user_id)
@@ -49,14 +47,14 @@ def createBackup(request):
             for item in path.iterdir():
                 destinations.append('s3:s3.amazonaws.com/%s' % item.name)
 
-        return defRenderer(request, 'IncBackups/createBackup.html',
-                           {'websiteList': websites, 'destinations': destinations})
+        return def_renderer(request, 'IncBackups/createBackup.html',
+                            {'websiteList': websites, 'destinations': destinations})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
 
 
-def backupDestinations(request):
+def backup_destinations(request):
     try:
         user_id = request.session['userID']
         current_acl = ACLManager.loadedACL(user_id)
@@ -64,13 +62,13 @@ def backupDestinations(request):
         if ACLManager.currentContextPermission(current_acl, 'addDeleteDestinations') == 0:
             return ACLManager.loadError()
 
-        return defRenderer(request, 'IncBackups/incrementalDestinations.html', {})
+        return def_renderer(request, 'IncBackups/incrementalDestinations.html', {})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
 
 
-def addDestination(request):
+def add_destination(request):
     try:
         user_id = request.session['userID']
         current_acl = ACLManager.loadedACL(user_id)
@@ -159,14 +157,13 @@ def addDestination(request):
             final_dic = {'status': 1}
             final_json = json.dumps(final_dic)
             return HttpResponse(final_json)
-
     except BaseException as msg:
         final_dic = {'status': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
 
-def populateCurrentRecords(request):
+def populate_current_records(request):
     try:
         user_id = request.session['userID']
         current_acl = ACLManager.loadedACL(user_id)
@@ -204,14 +201,13 @@ def populateCurrentRecords(request):
 
         final_json = json.dumps({'status': 1, 'error_message': "None", "data": json_data})
         return HttpResponse(final_json)
-
     except BaseException as msg:
         final_dic = {'status': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
 
-def removeDestination(request):
+def remove_destination(request):
     try:
         user_id = request.session['userID']
         current_acl = ACLManager.loadedACL(user_id)
@@ -235,14 +231,13 @@ def removeDestination(request):
         final_dic = {'status': 1, 'error_message': 'None'}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
-
     except BaseException as msg:
         final_dic = {'destStatus': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
 
-def fetchCurrentBackups(request):
+def fetch_current_backups(request):
     try:
         user_id = request.session['userID']
         current_acl = ACLManager.loadedACL(user_id)
@@ -289,7 +284,7 @@ def fetchCurrentBackups(request):
         return HttpResponse(final_json)
 
 
-def submitBackupCreation(request):
+def submit_backup_creation(request):
     try:
         user_id = request.session['userID']
         current_acl = ACLManager.loadedACL(user_id)
@@ -322,7 +317,6 @@ def submitBackupCreation(request):
 
         final_json = json.dumps({'status': 1, 'error_message': "None", 'tempPath': str(temp_path)})
         return HttpResponse(final_json)
-
     except BaseException as msg:
         logging.writeToFile(str(msg))
         final_dic = {'status': 0, 'metaStatus': 0, 'error_message': str(msg)}
@@ -330,18 +324,18 @@ def submitBackupCreation(request):
         return HttpResponse(final_json)
 
 
-def getBackupStatus(request):
+def get_backup_status(request):
     try:
         data = json.loads(request.body)
 
         status = data['tempPath']
-        backupDomain = data['websiteToBeBacked']
+        backup_domain = data['websiteToBeBacked']
 
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-        admin = Administrator.objects.get(pk=userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
+        admin = Administrator.objects.get(pk=user_id)
 
-        if ACLManager.checkOwnership(backupDomain, admin, currentACL) == 1:
+        if ACLManager.checkOwnership(backup_domain, admin, current_acl) == 1:
             pass
         else:
             return ACLManager.loadErrorJson('fetchStatus', 0)
@@ -390,7 +384,6 @@ def getBackupStatus(request):
         else:
             final_json = json.dumps({'backupStatus': 1, 'error_message': "None", "status": 1, "abort": 0})
             return HttpResponse(final_json)
-
     except BaseException as msg:
         final_dic = {'backupStatus': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
@@ -398,71 +391,60 @@ def getBackupStatus(request):
         return HttpResponse(final_json)
 
 
-def deleteBackup(request):
+def delete_backup(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-        admin = Administrator.objects.get(pk=userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
+        admin = Administrator.objects.get(pk=user_id)
         data = json.loads(request.body)
-        backupDomain = data['websiteToBeBacked']
+        backup_domain = data['websiteToBeBacked']
 
-        if ACLManager.checkOwnership(backupDomain, admin, currentACL) == 1:
+        if ACLManager.checkOwnership(backup_domain, admin, current_acl) == 1:
             pass
         else:
             return ACLManager.loadErrorJson('fetchStatus', 0)
 
-        id = data['backupID']
+        backup_id = data['backupID']
 
-        IncJob.objects.get(id=id).delete()
+        IncJob.objects.get(id=backup_id).delete()
 
         final_dic = {'status': 1, 'error_message': 'None'}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
-
     except BaseException as msg:
         final_dic = {'destStatus': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
 
-def fetchRestorePoints(request):
+def fetch_restore_points(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-        admin = Administrator.objects.get(pk=userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
+        admin = Administrator.objects.get(pk=user_id)
         data = json.loads(request.body)
-        backupDomain = data['websiteToBeBacked']
+        backup_domain = data['websiteToBeBacked']
 
-        if ACLManager.checkOwnership(backupDomain, admin, currentACL) == 1:
+        if ACLManager.checkOwnership(backup_domain, admin, current_acl) == 1:
             pass
         else:
             return ACLManager.loadErrorJson('fetchStatus', 0)
 
         data = json.loads(request.body)
-        id = data['id']
+        job_id = data['id']
 
-        incJob = IncJob.objects.get(id=id)
+        inc_job = IncJob.objects.get(id=job_id)
 
-        backups = incJob.jobsnapshots_set.all()
+        backups = inc_job.jobsnapshots_set.all()
 
-        json_data = "["
-        checker = 0
-
+        json_data = []
         for items in backups:
+            json_data.append({'id': items.id,
+                              'snapshotid': items.snapshotid,
+                              'type': items.type,
+                              'destination': items.destination,
+                              })
 
-            dic = {'id': items.id,
-                   'snapshotid': items.snapshotid,
-                   'type': items.type,
-                   'destination': items.destination,
-                   }
-
-            if checker == 0:
-                json_data = json_data + json.dumps(dic)
-                checker = 1
-            else:
-                json_data = json_data + ',' + json.dumps(dic)
-
-        json_data = json_data + ']'
         final_json = json.dumps({'status': 1, 'error_message': "None", "data": json_data})
         return HttpResponse(final_json)
     except BaseException as msg:
@@ -471,47 +453,46 @@ def fetchRestorePoints(request):
         return HttpResponse(final_json)
 
 
-def restorePoint(request):
+def restore_point(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-        admin = Administrator.objects.get(pk=userID)
+        user_id = request.session['userID']
+        current_acl = ACLManager.loadedACL(user_id)
+        admin = Administrator.objects.get(pk=user_id)
 
         data = json.loads(request.body)
-        backupDomain = data['websiteToBeBacked']
-        jobid = data['jobid']
+        backup_domain = data['websiteToBeBacked']
+        job_id = data['jobid']
 
-        if ACLManager.checkOwnership(backupDomain, admin, currentACL) == 1:
+        if ACLManager.checkOwnership(backup_domain, admin, current_acl) == 1:
             pass
         else:
             return ACLManager.loadErrorJson('metaStatus', 0)
 
-        tempPath = "/home/cyberpanel/" + str(randint(1000, 9999))
+        temp_path = Path("/home/cyberpanel/") / str(randint(1000, 9999))
 
         if data['reconstruct'] == 'remote':
             extraArgs = {}
-            extraArgs['website'] = backupDomain
-            extraArgs['jobid'] = jobid
-            extraArgs['tempPath'] = tempPath
+            extraArgs['website'] = backup_domain
+            extraArgs['jobid'] = job_id
+            extraArgs['tempPath'] = str(temp_path)
             extraArgs['reconstruct'] = data['reconstruct']
             extraArgs['backupDestinations'] = data['backupDestinations']
             extraArgs['password'] = data['password']
             extraArgs['path'] = data['path']
         else:
             extraArgs = {}
-            extraArgs['website'] = backupDomain
-            extraArgs['jobid'] = jobid
-            extraArgs['tempPath'] = tempPath
+            extraArgs['website'] = backup_domain
+            extraArgs['jobid'] = job_id
+            extraArgs['tempPath'] = str(temp_path)
             extraArgs['reconstruct'] = data['reconstruct']
 
-        startJob = IncJobs('restorePoint', extraArgs)
-        startJob.start()
+        start_job = IncJobs('restorePoint', extraArgs)
+        start_job.start()
 
         time.sleep(2)
 
-        final_json = json.dumps({'status': 1, 'error_message': "None", 'tempPath': tempPath})
+        final_json = json.dumps({'status': 1, 'error_message': "None", 'tempPath': str(temp_path)})
         return HttpResponse(final_json)
-
     except BaseException as msg:
         logging.writeToFile(str(msg))
         final_dic = {'status': 0, 'metaStatus': 0, 'error_message': str(msg)}
@@ -545,8 +526,8 @@ def scheduleBackups(request):
 
         websitesName = ACLManager.findAllSites(currentACL, userID)
 
-        return defRenderer(request, 'IncBackups/backupSchedule.html',
-                           {'websiteList': websitesName, 'destinations': destinations})
+        return def_renderer(request, 'IncBackups/backupSchedule.html',
+                            {'websiteList': websitesName, 'destinations': destinations})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
@@ -724,8 +705,8 @@ def restoreRemoteBackups(request):
             for items in os.listdir(path):
                 destinations.append('s3:s3.amazonaws.com/%s' % (items))
 
-        return defRenderer(request, 'IncBackups/restoreRemoteBackups.html',
-                           {'websiteList': websitesName, 'destinations': destinations})
+        return def_renderer(request, 'IncBackups/restoreRemoteBackups.html',
+                            {'websiteList': websitesName, 'destinations': destinations})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)

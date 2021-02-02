@@ -240,7 +240,7 @@ app.controller('createIncrementalBackups', function ($scope, $http, $timeout) {
         function ListInitialDatas(response) {
             $scope.cyberpanelLoading = true;
             if (response.data.status === 1) {
-                $scope.jobs = JSON.parse(response.data.data);
+                $scope.jobs = response.data.data;
             } else {
                 new PNotify({
                     title: 'Operation Failed!',
