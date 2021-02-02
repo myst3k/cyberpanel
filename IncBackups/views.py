@@ -308,7 +308,7 @@ def submitBackupCreation(request):
 
         extra_args = {}
         extra_args['website'] = backup_domain
-        extra_args['tempPath'] = temp_path.as_posix()
+        extra_args['tempPath'] = str(temp_path)
         extra_args['backupDestinations'] = backup_destinations
         extra_args['websiteData'] = data['websiteData'] if 'websiteData' in data else False
         extra_args['websiteEmails'] = data['websiteEmails'] if 'websiteEmails' in data else False
@@ -320,7 +320,7 @@ def submitBackupCreation(request):
 
         time.sleep(2)
 
-        final_json = json.dumps({'status': 1, 'error_message': "None", 'tempPath': temp_path})
+        final_json = json.dumps({'status': 1, 'error_message': "None", 'tempPath': str(temp_path)})
         return HttpResponse(final_json)
 
     except BaseException as msg:
