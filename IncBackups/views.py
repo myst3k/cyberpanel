@@ -692,7 +692,7 @@ def add_website(request):
 
         try:
             JobSites.objects.get(job=job, website=website)
-        except:
+        except BaseException:
             site = JobSites(job=job, website=website)
             site.save()
 
