@@ -41,7 +41,7 @@ def _get_destinations(local: bool = False):
     return destinations
 
 
-def _get_user_acl(request) -> tuple[str, object]:
+def _get_user_acl(request):
     user_id = request.session['userID']
     current_acl = ACLManager.loadedACL(user_id)
     return user_id, current_acl
