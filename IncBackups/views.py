@@ -25,27 +25,37 @@ def def_renderer(request, templateName, args):
     return render(request, templateName, args)
 
 
+def _get_destinations(local: bool = False):
+    destinations = []
+    if local:
+        destinations.append('local')
+    path = Path(IncBackupPath.SFTP.value)
+    if path.exists():
+        for item in path.iterdir():
+            destinations.append('sftp:%s' % item.name)
+
+    path = Path(IncBackupPath.AWS.value)
+    if path.exists():
+        for item in path.iterdir():
+            destinations.append('s3:s3.amazonaws.com/%s' % item.name)
+    return destinations
+
+
+def _get_user_acl(request) -> tuple[str, object]:
+    user_id = request.session['userID']
+    current_acl = ACLManager.loadedACL(user_id)
+    return user_id, current_acl
+
+
 def create_backup(request):
     try:
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
-
+        user_id, current_acl = _get_user_acl(request)
         if ACLManager.currentContextPermission(current_acl, 'createBackup') == 0:
             return ACLManager.loadError()
 
         websites = ACLManager.findAllSites(current_acl, user_id)
 
-        destinations = ['local']
-
-        path = Path(IncBackupPath.SFTP.value)
-        if path.exists():
-            for item in path.iterdir():
-                destinations.append('sftp:%s' % item.name)
-
-        path = Path(IncBackupPath.AWS.value)
-        if os.path.exists(path):
-            for item in path.iterdir():
-                destinations.append('s3:s3.amazonaws.com/%s' % item.name)
+        destinations = _get_destinations(local=True)
 
         return def_renderer(request, 'IncBackups/createBackup.html',
                             {'websiteList': websites, 'destinations': destinations})
@@ -56,9 +66,7 @@ def create_backup(request):
 
 def backup_destinations(request):
     try:
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
-
+        user_id, current_acl = _get_user_acl(request)
         if ACLManager.currentContextPermission(current_acl, 'addDeleteDestinations') == 0:
             return ACLManager.loadError()
 
@@ -70,9 +78,7 @@ def backup_destinations(request):
 
 def add_destination(request):
     try:
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
-
+        user_id, current_acl = _get_user_acl(request)
         if ACLManager.currentContextPermission(current_acl, 'addDeleteDestinations') == 0:
             return ACLManager.loadErrorJson('destStatus', 0)
 
@@ -165,9 +171,7 @@ def add_destination(request):
 
 def populate_current_records(request):
     try:
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
-
+        user_id, current_acl = _get_user_acl(request)
         if ACLManager.currentContextPermission(current_acl, 'addDeleteDestinations') == 0:
             return ACLManager.loadErrorJson('fetchStatus', 0)
 
@@ -209,9 +213,7 @@ def populate_current_records(request):
 
 def remove_destination(request):
     try:
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
-
+        user_id, current_acl = _get_user_acl(request)
         if ACLManager.currentContextPermission(current_acl, 'addDeleteDestinations') == 0:
             return ACLManager.loadErrorJson('destStatus', 0)
 
@@ -239,8 +241,7 @@ def remove_destination(request):
 
 def fetch_current_backups(request):
     try:
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
+        user_id, current_acl = _get_user_acl(request)
         admin = Administrator.objects.get(pk=user_id)
 
         data = json.loads(request.body)
@@ -286,8 +287,7 @@ def fetch_current_backups(request):
 
 def submit_backup_creation(request):
     try:
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
+        user_id, current_acl = _get_user_acl(request)
         admin = Administrator.objects.get(pk=user_id)
 
         data = json.loads(request.body)
@@ -331,10 +331,8 @@ def get_backup_status(request):
         status = data['tempPath']
         backup_domain = data['websiteToBeBacked']
 
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
+        user_id, current_acl = _get_user_acl(request)
         admin = Administrator.objects.get(pk=user_id)
-
         if ACLManager.checkOwnership(backup_domain, admin, current_acl) == 1:
             pass
         else:
@@ -393,8 +391,7 @@ def get_backup_status(request):
 
 def delete_backup(request):
     try:
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
+        user_id, current_acl = _get_user_acl(request)
         admin = Administrator.objects.get(pk=user_id)
         data = json.loads(request.body)
         backup_domain = data['websiteToBeBacked']
@@ -419,8 +416,7 @@ def delete_backup(request):
 
 def fetch_restore_points(request):
     try:
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
+        user_id, current_acl = _get_user_acl(request)
         admin = Administrator.objects.get(pk=user_id)
         data = json.loads(request.body)
         backup_domain = data['websiteToBeBacked']
@@ -455,8 +451,7 @@ def fetch_restore_points(request):
 
 def restore_point(request):
     try:
-        user_id = request.session['userID']
-        current_acl = ACLManager.loadedACL(user_id)
+        user_id, current_acl = _get_user_acl(request)
         admin = Administrator.objects.get(pk=user_id)
 
         data = json.loads(request.body)
@@ -500,224 +495,143 @@ def restore_point(request):
         return HttpResponse(final_json)
 
 
-def scheduleBackups(request):
+def schedule_backups(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-
-        if ACLManager.currentContextPermission(currentACL, 'scheDuleBackups') == 0:
+        user_id, current_acl = _get_user_acl(request)
+        if ACLManager.currentContextPermission(current_acl, 'scheDuleBackups') == 0:
             return ACLManager.loadError()
 
-        websitesName = ACLManager.findAllSites(currentACL, userID)
+        websites = ACLManager.findAllSites(current_acl, user_id)
 
-        destinations = []
-        destinations.append('local')
-
-        path = '/home/cyberpanel/sftp'
-
-        if os.path.exists(path):
-            for items in os.listdir(path):
-                destinations.append('sftp:%s' % (items))
-
-        path = '/home/cyberpanel/aws'
-        if os.path.exists(path):
-            for items in os.listdir(path):
-                destinations.append('s3:s3.amazonaws.com/%s' % (items))
-
-        websitesName = ACLManager.findAllSites(currentACL, userID)
+        destinations = _get_destinations(local=True)
 
         return def_renderer(request, 'IncBackups/backupSchedule.html',
-                            {'websiteList': websitesName, 'destinations': destinations})
+                            {'websiteList': websites, 'destinations': destinations})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
 
 
-def submitBackupSchedule(request):
+def submit_backup_schedule(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-
-        if ACLManager.currentContextPermission(currentACL, 'scheDuleBackups') == 0:
+        user_id, current_acl = _get_user_acl(request)
+        if ACLManager.currentContextPermission(current_acl, 'scheDuleBackups') == 0:
             return ACLManager.loadErrorJson('scheduleStatus', 0)
 
         data = json.loads(request.body)
 
-        backupDest = data['backupDestinations']
-        backupFreq = data['backupFreq']
-        websitesToBeBacked = data['websitesToBeBacked']
+        backup_dest = data['backupDestinations']
+        backup_freq = data['backupFreq']
+        backup_sites = data['websitesToBeBacked']
 
-        try:
-            websiteData = data['websiteData']
-            websiteData = 1
-        except:
-            websiteData = False
-            websiteData = 0
+        backup_data = 1 if 'websiteData' in data else 0
+        backup_emails = 1 if 'websiteEmails' in data else 0
+        backup_databases = 1 if 'websiteDatabases' in data else 0
 
-        try:
-            websiteEmails = data['websiteEmails']
-            websiteEmails = 1
-        except:
-            websiteEmails = False
-            websiteEmails = 0
+        backup_job = BackupJob(websiteData=backup_data, websiteDataEmails=backup_emails,
+                               websiteDatabases=backup_databases, destination=backup_dest, frequency=backup_freq)
+        backup_job.save()
 
-        try:
-            websiteDatabases = data['websiteDatabases']
-            websiteDatabases = 1
-        except:
-            websiteDatabases = False
-            websiteDatabases = 0
-
-        newJob = BackupJob(websiteData=websiteData, websiteDataEmails=websiteEmails, websiteDatabases=websiteDatabases,
-                           destination=backupDest, frequency=backupFreq)
-        newJob.save()
-
-        for items in websitesToBeBacked:
-            jobsite = JobSites(job=newJob, website=items)
-            jobsite.save()
+        for site in backup_sites:
+            backup_site_job = JobSites(job=backup_job, website=site)
+            backup_site_job.save()
 
         final_json = json.dumps({'status': 1, 'error_message': "None"})
         return HttpResponse(final_json)
-
-
     except BaseException as msg:
         final_json = json.dumps({'status': 0, 'error_message': str(msg)})
         return HttpResponse(final_json)
 
 
-def getCurrentBackupSchedules(request):
+def get_current_backup_schedules(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-
-        if ACLManager.currentContextPermission(currentACL, 'scheDuleBackups') == 0:
+        user_id, current_acl = _get_user_acl(request)
+        if ACLManager.currentContextPermission(current_acl, 'scheDuleBackups') == 0:
             return ACLManager.loadErrorJson('fetchStatus', 0)
 
         records = BackupJob.objects.all()
 
-        json_data = "["
-        checker = 0
-
+        json_data = []
         for items in records:
-            dic = {'id': items.id,
-                   'destination': items.destination,
-                   'frequency': items.frequency,
-                   'numberOfSites': items.jobsites_set.all().count()
-                   }
-
-            if checker == 0:
-                json_data = json_data + json.dumps(dic)
-                checker = 1
-            else:
-                json_data = json_data + ',' + json.dumps(dic)
-
-        json_data = json_data + ']'
+            json_data.append({'id': items.id,
+                              'destination': items.destination,
+                              'frequency': items.frequency,
+                              'numberOfSites': items.jobsites_set.all().count()
+                              })
         final_json = json.dumps({'status': 1, 'error_message': "None", "data": json_data})
         return HttpResponse(final_json)
-
     except BaseException as msg:
         final_dic = {'status': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
 
-def fetchSites(request):
+def fetch_sites(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-
-        if ACLManager.currentContextPermission(currentACL, 'scheDuleBackups') == 0:
+        user_id, current_acl = _get_user_acl(request)
+        if ACLManager.currentContextPermission(current_acl, 'scheDuleBackups') == 0:
             return ACLManager.loadErrorJson('fetchStatus', 0)
 
         data = json.loads(request.body)
 
         job = BackupJob.objects.get(pk=data['id'])
 
-        json_data = "["
-        checker = 0
-
-        for items in job.jobsites_set.all():
-            dic = {'id': items.id,
-                   'website': items.website,
-                   }
-
-            if checker == 0:
-                json_data = json_data + json.dumps(dic)
-                checker = 1
-            else:
-                json_data = json_data + ',' + json.dumps(dic)
-
-        json_data = json_data + ']'
+        json_data = []
+        for jobsite in job.jobsites_set.all():
+            json_data.append({'id': jobsite.id,
+                              'website': jobsite.website,
+                              })
         final_json = json.dumps({'status': 1, 'error_message': "None", "data": json_data,
                                  'websiteData': job.websiteData, 'websiteDatabases': job.websiteDatabases,
                                  'websiteEmails': job.websiteDataEmails})
         return HttpResponse(final_json)
-
     except BaseException as msg:
         final_dic = {'status': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
 
 
-def scheduleDelete(request):
+def schedule_delete(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-
-        if ACLManager.currentContextPermission(currentACL, 'scheDuleBackups') == 0:
+        user_id, current_acl = _get_user_acl(request)
+        if ACLManager.currentContextPermission(current_acl, 'scheDuleBackups') == 0:
             return ACLManager.loadErrorJson('scheduleStatus', 0)
 
         data = json.loads(request.body)
 
-        id = data['id']
+        job_id = data['id']
 
-        backupJob = BackupJob.objects.get(id=id)
-        backupJob.delete()
+        backup_job = BackupJob.objects.get(id=job_id)
+        backup_job.delete()
 
         final_json = json.dumps({'status': 1, 'error_message': "None"})
         return HttpResponse(final_json)
-
     except BaseException as msg:
         final_json = json.dumps({'status': 0, 'error_message': str(msg)})
         return HttpResponse(final_json)
 
 
-def restoreRemoteBackups(request):
+def restore_remote_backups(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-
-        if ACLManager.currentContextPermission(currentACL, 'createBackup') == 0:
+        user_id, current_acl = _get_user_acl(request)
+        if ACLManager.currentContextPermission(current_acl, 'createBackup') == 0:
             return ACLManager.loadError()
 
-        websitesName = ACLManager.findAllSites(currentACL, userID)
+        websites = ACLManager.findAllSites(current_acl, user_id)
 
-        destinations = []
-
-        path = '/home/cyberpanel/sftp'
-
-        if os.path.exists(path):
-            for items in os.listdir(path):
-                destinations.append('sftp:%s' % (items))
-
-        path = '/home/cyberpanel/aws'
-        if os.path.exists(path):
-            for items in os.listdir(path):
-                destinations.append('s3:s3.amazonaws.com/%s' % (items))
+        destinations = _get_destinations()
 
         return def_renderer(request, 'IncBackups/restoreRemoteBackups.html',
-                            {'websiteList': websitesName, 'destinations': destinations})
+                            {'websiteList': websites, 'destinations': destinations})
     except BaseException as msg:
         logging.writeToFile(str(msg))
         return redirect(loadLoginPage)
 
 
-def saveChanges(request):
+def save_changes(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-
-        if ACLManager.currentContextPermission(currentACL, 'scheDuleBackups') == 0:
+        user_id, current_acl = _get_user_acl(request)
+        if ACLManager.currentContextPermission(current_acl, 'scheDuleBackups') == 0:
             return ACLManager.loadErrorJson('scheduleStatus', 0)
 
         data = json.loads(request.body)
