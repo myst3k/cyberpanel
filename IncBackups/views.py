@@ -636,77 +636,59 @@ def save_changes(request):
 
         data = json.loads(request.body)
 
-        id = data['id']
-        try:
-            websiteData = data['websiteData']
-        except:
-            websiteData = 0
-        try:
-            websiteDatabases = data['websiteDatabases']
-        except:
-            websiteDatabases = 0
-        try:
-            websiteEmails = data['websiteEmails']
-        except:
-            websiteEmails = 0
+        job_id = data['id']
 
-        job = BackupJob.objects.get(pk=id)
+        backup_data = data['websiteData'] if 'websiteData' in data else 0
+        backup_emails = data['websiteEmails'] if 'websiteEmails' in data else 0
+        backup_databases = data['websiteDatabases'] if 'websiteDatabases' in data else 0
 
-        job.websiteData = int(websiteData)
-        job.websiteDatabases = int(websiteDatabases)
-        job.websiteDataEmails = int(websiteEmails)
+        job = BackupJob.objects.get(pk=job_id)
+
+        job.websiteData = int(backup_data)
+        job.websiteDatabases = int(backup_databases)
+        job.websiteDataEmails = int(backup_emails)
         job.save()
 
         final_json = json.dumps({'status': 1, 'error_message': "None"})
         return HttpResponse(final_json)
-
-
     except BaseException as msg:
         final_json = json.dumps({'status': 0, 'error_message': str(msg)})
         return HttpResponse(final_json)
 
 
-def removeSite(request):
+def remove_site(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-
-        if ACLManager.currentContextPermission(currentACL, 'scheDuleBackups') == 0:
+        _, current_acl = _get_user_acl(request)
+        if ACLManager.currentContextPermission(current_acl, 'scheDuleBackups') == 0:
             return ACLManager.loadErrorJson('scheduleStatus', 0)
 
         data = json.loads(request.body)
 
-        id = data['id']
+        job_id = data['id']
         website = data['website']
-
-        job = BackupJob.objects.get(pk=id)
-
+        job = BackupJob.objects.get(pk=job_id)
         site = JobSites.objects.get(job=job, website=website)
         site.delete()
 
         final_json = json.dumps({'status': 1, 'error_message': "None"})
         return HttpResponse(final_json)
-
-
     except BaseException as msg:
         final_json = json.dumps({'status': 0, 'error_message': str(msg)})
         return HttpResponse(final_json)
 
 
-def addWebsite(request):
+def add_website(request):
     try:
-        userID = request.session['userID']
-        currentACL = ACLManager.loadedACL(userID)
-
-        if ACLManager.currentContextPermission(currentACL, 'scheDuleBackups') == 0:
+        _, current_acl = _get_user_acl(request)
+        if ACLManager.currentContextPermission(current_acl, 'scheDuleBackups') == 0:
             return ACLManager.loadErrorJson('scheduleStatus', 0)
 
         data = json.loads(request.body)
 
-        id = data['id']
+        job_id = data['id']
         website = data['website']
 
-        job = BackupJob.objects.get(pk=id)
+        job = BackupJob.objects.get(pk=job_id)
 
         try:
             JobSites.objects.get(job=job, website=website)
@@ -716,8 +698,6 @@ def addWebsite(request):
 
         final_json = json.dumps({'status': 1, 'error_message': "None"})
         return HttpResponse(final_json)
-
-
     except BaseException as msg:
         final_json = json.dumps({'status': 0, 'error_message': str(msg)})
         return HttpResponse(final_json)
