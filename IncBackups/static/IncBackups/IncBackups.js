@@ -621,7 +621,7 @@ app.controller('scheduleBackupInc', function ($scope, $http) {
             if (response.data.status === 1) {
                 new PNotify({
                     title: 'Success!',
-                    text: 'Destination successfully removed.',
+                    text: 'Operation successful.',
                     type: 'success'
                 });
             } else {
