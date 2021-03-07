@@ -173,7 +173,8 @@ def add_destination(request):
             access_key = data['S3_ACCESS_KEY_ID']
             secret_key = data['S3_SECRET_ACCESS_KEY']
 
-            file_path = path / "%s.%s" % (bucket, access_key)
+            file_name = "%s.%s" % (bucket, access_key)
+            file_path = path / file_name
 
             file_data = {
                 "URL": url,
