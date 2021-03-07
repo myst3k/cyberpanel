@@ -146,63 +146,61 @@
                         <!--- AWS  End --->
 
                         <!--- S3-Compatible Start --->
-                        <div ng-hide="s3compatHide">
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label">{% trans "S3 URL" %}</label>
-                                <div class="col-sm-6">
-                                    <input type="text" class="form-control" ng-model="S3_URL" required>
-                                </div>
+                        <div ng-hide="s3compatHide" class="form-group">
+                            <label class="col-sm-3 control-label">{% trans "S3 URL" %}</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" ng-model="S3_URL" required>
                             </div>
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label">{% trans "Access Key ID" %}</label>
-                                <div class="col-sm-6">
-                                    <input type="text" class="form-control" ng-model="S3_ACCESS_KEY_ID" required>
-                                </div>
+                        </div>
+                        <div ng-hide="s3compatHide" class="form-group">
+                            <label class="col-sm-3 control-label">{% trans "Access Key ID" %}</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" ng-model="S3_ACCESS_KEY_ID" required>
                             </div>
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label">{% trans "Secret Access Key" %}</label>
-                                <div class="col-sm-6">
-                                    <input placeholder="" type="password" class="form-control"
-                                           ng-model="S3_SECRET_ACCESS_KEY" required>
-                                </div>
+                        </div>
+                        <div ng-hide="s3compatHide" class="form-group">
+                            <label class="col-sm-3 control-label">{% trans "Secret Access Key" %}</label>
+                            <div class="col-sm-6">
+                                <input placeholder="" type="password" class="form-control"
+                                       ng-model="S3_SECRET_ACCESS_KEY" required>
                             </div>
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label">{% trans "Bucket" %}</label>
-                                <div class="col-sm-6">
-                                    <input type="text" class="form-control" ng-model="S3_BUCKET" required>
-                                </div>
+                        </div>
+                        <div ng-hide="s3compatHide" class="form-group">
+                            <label class="col-sm-3 control-label">{% trans "Bucket" %}</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" ng-model="S3_BUCKET" required>
                             </div>
-                            <div class="form-group">
-                                <label class="col-sm-3 control-label"></label>
-                                <div class="col-sm-4">
-                                    <button type="button" ng-click="addDestination('S3-Compatible')"
-                                            class="btn btn-primary btn-lg btn-block">{% trans "Add Destination" %}</button>
+                        </div>
+                        <div ng-hide="s3compatHide" class="form-group">
+                            <label class="col-sm-3 control-label"></label>
+                            <div class="col-sm-4">
+                                <button type="button" ng-click="addDestination('S3-Compatible')"
+                                        class="btn btn-primary btn-lg btn-block">{% trans "Add Destination" %}</button>
 
-                                </div>
                             </div>
+                        </div>
 
-                            <!------ List of Destinations --------------->
+                        <!------ List of Destinations --------------->
 {#                            FIXME#}
-                            <div class="form-group">
-                                <div class="col-sm-12">
-                                    <table class="table">
-                                        <thead>
-                                        <tr>
-                                            <th>{% trans "AWS_ACCESS_KEY_ID" %}</th>
-                                            <th>{% trans "Delete" %}</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody>
-                                        <tr ng-repeat="record in records track by $index">
-                                            <td ng-bind="record.AWS_ACCESS_KEY_ID"></td>
-                                            <td ng-click="removeDestination('AWS', record.AWS_ACCESS_KEY_ID)"><img
-                                                    src="{% static 'images/delete.png' %}">
-                                            </td>
+                        <div ng-hide="s3compatHide" class="form-group">
+                            <div class="col-sm-12">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>{% trans "AWS_ACCESS_KEY_ID" %}</th>
+                                        <th>{% trans "Delete" %}</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr ng-repeat="record in records track by $index">
+                                        <td ng-bind="record.AWS_ACCESS_KEY_ID"></td>
+                                        <td ng-click="removeDestination('AWS', record.AWS_ACCESS_KEY_ID)"><img
+                                                src="{% static 'images/delete.png' %}">
+                                        </td>
 
-                                        </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                    </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                         <!--- S3-Compatible  End --->
