@@ -164,7 +164,7 @@ def add_destination(request):
             final_json = json.dumps(final_dic)
             return HttpResponse(final_json)
 
-        if data['type'].lower() == IncBackupProvider.S3COMPATIBLE.name.lower():
+        if data['type'].lower() == IncBackupProvider.S3COMPATIBLE.value.lower():
             path = Path(IncBackupPath.S3COMPATIBLE.value)
             path.mkdir(exist_ok=True)
 
