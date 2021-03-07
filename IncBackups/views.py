@@ -177,10 +177,10 @@ def add_destination(request):
             file_path = path / file_name
 
             file_data = {
-                "URL": url,
-                "BUCKET": bucket,
-                "ACCESS_KEY": access_key,
-                "SECRET_KEY": secret_key
+                "S3_URL": url,
+                "S3_BUCKET": bucket,
+                "S3_ACCESS_KEY_ID": access_key,
+                "S3_SECRET_ACCESS_KEY": secret_key
             }
 
             with open(file_path, 'w') as outfile:
@@ -227,6 +227,20 @@ def populate_current_records(request):
             if path.exists():
                 for item in path.iterdir():
                     json_data.append({'AWS_ACCESS_KEY_ID': item.name})
+            else:
+                final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
+                return HttpResponse(final_json)
+
+        if data['type'].lower() == IncBackupProvider.S3COMPATIBLE.value.lower():
+            path = Path(IncBackupPath.S3COMPATIBLE.value)
+
+            if path.exists():
+                for item in path.iterdir():
+                    with open(item) as infile:
+                        _json = json.load(infile)
+                        if "S3_SECRET_ACCESS_KEY" in _json:
+                            del _json['S3_SECRET_ACCESS_KEY']
+                        json_data.append(_json)
             else:
                 final_json = json.dumps({'status': 1, 'error_message': "None", "data": ''})
                 return HttpResponse(final_json)

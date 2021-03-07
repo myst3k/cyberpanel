@@ -187,13 +187,17 @@
                                 <table class="table">
                                     <thead>
                                     <tr>
-                                        <th>{% trans "AWS_ACCESS_KEY_ID" %}</th>
+                                        <th>{% trans "URL" %}</th>
+                                        <th>{% trans "BUCKET" %}</th>
+                                        <th>{% trans "ACCESS KEY" %}</th>
                                         <th>{% trans "Delete" %}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     <tr ng-repeat="record in records track by $index">
-                                        <td ng-bind="record.AWS_ACCESS_KEY_ID"></td>
+                                        <td ng-bind="record.S3_URL"></td>
+                                        <td ng-bind="record.S3_BUCKET"></td>
+                                        <td ng-bind="record.S3_ACCESS_KEY_ID"></td>
                                         <td ng-click="removeDestination('AWS', record.AWS_ACCESS_KEY_ID)"><img
                                                 src="{% static 'images/delete.png' %}">
                                         </td>
