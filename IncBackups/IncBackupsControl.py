@@ -74,6 +74,7 @@ class IncJobs(multi.Thread):
             self.destinationType = "s3"
         if self.backupDestinations.startswith("s3compat:"):
             self.destinationType = "s3compat"
+        logging.statusWriter(self.statusPath, 'Setting destinationType to %s' % self.destinationType, 1)
 
     def getRemoteBackups(self):
         if self.backupDestinations[:4] == 'sftp':
@@ -898,16 +899,14 @@ class IncJobs(multi.Thread):
                 result = ProcessUtilities.outputExecutioner(command)
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
-
-            if self.destinationType == 'sftp':
+            elif self.destinationType == 'sftp':
                 remotePath = '/home/backup/%s' % (self.website.domain)
                 command = 'export PATH=${PATH}:/usr/bin && restic init --repo %s:%s --password-file %s' % (
                     self.backupDestinations, remotePath, self.passwordFile)
                 result = ProcessUtilities.outputExecutioner(command)
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
-
-            if self.destinationType == 's3':
+            elif self.destinationType == 's3':
                 key, secret = self._get_aws_data()
                 command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo s3:s3.amazonaws.com/%s init --password-file %s' % (
                     key, secret, self.website.domain, self.passwordFile)
@@ -915,8 +914,7 @@ class IncJobs(multi.Thread):
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
                 return 1
-
-            if self.destinationType == 's3compat':
+            elif self.destinationType == 's3compat':
                 url, access_key, secret_key = self._get_s3compat_data()
                 command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo s3:%s/%s init --password-file %s' % (
                     access_key, secret_key, url, self.website.domain, self.passwordFile)
