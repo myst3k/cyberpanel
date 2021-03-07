@@ -29,6 +29,8 @@ from mailServer.models import Domains as eDomains
 from random import randint
 import json
 from django.shortcuts import HttpResponse
+from .IncBackupPath import IncBackupPath
+from pathlib import Path
 
 try:
     from plogical.virtualHostUtilities import virtualHostUtilities
@@ -132,6 +134,17 @@ class IncJobs(multi.Thread):
         path = '/home/cyberpanel/aws/%s' % (key)
         secret = open(path, 'r').read()
         return key, secret
+
+    def _get_s3compat_data(self):
+        key = self.backupDestinations[len("s3compat:"):]
+        _, bucket, access_key = key.split("/")
+        file_name = "%s.%s" % (bucket, access_key)
+        path = Path(IncBackupPath.S3COMPATIBLE.value) / file_name
+        with open(path) as infile:
+            _json = json.load(infile)
+            url = _json['S3_URL']
+            secret_key = _json['S3_SECRET_ACCESS_KEY']
+        return url, bucket, access_key, secret_key
 
     def awsFunction(self, fType, backupPath=None, snapshotID=None, bType=None):
         try:
@@ -788,17 +801,27 @@ class IncJobs(multi.Thread):
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
 
-            elif self.backupDestinations[:4] == 'sftp':
+            if self.backupDestinations.startswith("sftp:"):
                 remotePath = '/home/backup/%s' % (self.website.domain)
                 command = 'export PATH=${PATH}:/usr/bin && restic init --repo %s:%s --password-file %s' % (
                     self.backupDestinations, remotePath, self.passwordFile)
                 result = ProcessUtilities.outputExecutioner(command)
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
-            else:
+
+            if self.backupDestinations.startswith("s3:"):
                 key, secret = self.getAWSData()
                 command = 'export AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s  && restic -r s3:s3.amazonaws.com/%s init --password-file %s' % (
                     key, secret, self.website.domain, self.passwordFile)
+                result = ProcessUtilities.outputExecutioner(command)
+                if result.find('config file already exists') == -1:
+                    logging.statusWriter(self.statusPath, result, 1)
+                return 1
+
+            if self.backupDestinations.startswith("s3compat:"):
+                url, bucket, access_key, secret_key = self._get_s3compat_data()
+                command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo s3:https://%s/%s/%s init --password-file %s' % (
+                    access_key, secret_key, url, bucket, self.website.domain, self.passwordFile)
                 result = ProcessUtilities.outputExecutioner(command)
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
