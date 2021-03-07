@@ -163,6 +163,33 @@ def add_destination(request):
             final_dic = {'status': 1}
             final_json = json.dumps(final_dic)
             return HttpResponse(final_json)
+
+        if data['type'].lower() == IncBackupProvider.S3COMPATIBLE.name.lower():
+            path = Path(IncBackupPath.S3COMPATIBLE.value)
+            path.mkdir(exist_ok=True)
+
+            url = data['S3_URL']
+            bucket = data['S3_BUCKET']
+            access_key = data['S3_ACCESS_KEY_ID']
+            secret_key = data['S3_SECRET_ACCESS_KEY']
+
+            file_path = path / "%s.%s" % (bucket, access_key)
+
+            file_data = {
+                "URL": url,
+                "BUCKET": bucket,
+                "ACCESS_KEY": access_key,
+                "SECRET_KEY": secret_key
+            }
+
+            with open(file_path, 'w') as outfile:
+                outfile.write(json.dumps(file_data))
+
+            file_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+
+            final_dic = {'status': 1}
+            final_json = json.dumps(final_dic)
+            return HttpResponse(final_json)
     except BaseException as msg:
         final_dic = {'status': 0, 'error_message': str(msg)}
         final_json = json.dumps(final_dic)

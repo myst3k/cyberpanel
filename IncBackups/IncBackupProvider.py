@@ -5,4 +5,4 @@ class IncBackupProvider(Enum):
     LOCAL = auto()
     SFTP = auto()
     AWS = auto()
-    # WASABI = auto()
+    S3COMPATIBLE = "s3-compatible"
