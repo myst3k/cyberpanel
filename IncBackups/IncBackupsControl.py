@@ -794,6 +794,8 @@ class IncJobs(multi.Thread):
             elif self.destinationType == 's3compat':
                 if self._s3_backup('s3compat', backupPath, '', 'data') == 0:
                     return 0
+            else:
+                logging.statusWriter(self.statusPath,'no destinationType configured', 1)
 
             logging.statusWriter(self.statusPath,
                                  'Data for %s backed to %s.' % (self.website.domain, self.backupDestinations), 1)
