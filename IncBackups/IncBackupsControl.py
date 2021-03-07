@@ -54,31 +54,26 @@ class IncJobs(multi.Thread):
         self.metaPath = ''
         self.path = ''
         self.reconstruct = ''
-        self.destinationType = self._set_dest_type()
+        self.destinationType = ''
 
     def run(self):
         if self.function == 'createBackup':
-            self._set_dest_type()
             self.createBackup()
         elif self.function == 'restorePoint':
-            self._set_dest_type()
             self.restorePoint()
         elif self.function == 'remoteRestore':
-            self._set_dest_type()
             self.restorePoint()
 
     def _set_dest_type(self):
-        dest_type = ''
         if self.backupDestinations == 'local':
-            dest_type = "local"
+            self.destinationType = "local"
         if self.backupDestinations.startswith("sftp:"):
-            dest_type = "sftp"
+            self.destinationType = "sftp"
         if self.backupDestinations.startswith("s3:"):
-            dest_type = "s3"
+            self.destinationType = "s3"
         if self.backupDestinations.startswith("s3compat:"):
-            dest_type = "s3compat"
+            self.destinationType = "s3compat"
         logging.statusWriter(self.statusPath, 'Setting destinationType to %s' % self.destinationType, 1)
-        return dest_type
 
     def getRemoteBackups(self):
         if self.backupDestinations[:4] == 'sftp':
@@ -957,6 +952,7 @@ Subject: %s
         self.statusPath = self.extraArgs['tempPath']
         website = self.extraArgs['website']
         self.backupDestinations = self.extraArgs['backupDestinations']
+        self._set_dest_type()
         websiteData = self.extraArgs['websiteData']
         websiteEmails = self.extraArgs['websiteEmails']
         websiteDatabases = self.extraArgs['websiteDatabases']
