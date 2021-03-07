@@ -55,9 +55,9 @@ class IncJobs(multi.Thread):
         self.path = ''
         self.reconstruct = ''
         self.destinationType = ''
+        self._set_dest_type()
 
     def run(self):
-        self._set_dest_type()
         if self.function == 'createBackup':
             self.createBackup()
         elif self.function == 'restorePoint':
