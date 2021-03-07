@@ -54,7 +54,7 @@ class IncJobs(multi.Thread):
         self.metaPath = ''
         self.path = ''
         self.reconstruct = ''
-        self.destinationType = ''
+        self.destinationType = self._set_dest_type()
 
     def run(self):
         if self.function == 'createBackup':
@@ -68,15 +68,17 @@ class IncJobs(multi.Thread):
             self.restorePoint()
 
     def _set_dest_type(self):
+        dest_type = ''
         if self.backupDestinations == 'local':
-            self.destinationType = "local"
+            dest_type = "local"
         if self.backupDestinations.startswith("sftp:"):
-            self.destinationType = "sftp"
+            dest_type = "sftp"
         if self.backupDestinations.startswith("s3:"):
-            self.destinationType = "s3"
+            dest_type = "s3"
         if self.backupDestinations.startswith("s3compat:"):
-            self.destinationType = "s3compat"
+            dest_type = "s3compat"
         logging.statusWriter(self.statusPath, 'Setting destinationType to %s' % self.destinationType, 1)
+        return dest_type
 
     def getRemoteBackups(self):
         if self.backupDestinations[:4] == 'sftp':
