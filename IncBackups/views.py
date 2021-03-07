@@ -38,6 +38,13 @@ def _get_destinations(local: bool = False):
     if path.exists():
         for item in path.iterdir():
             destinations.append('s3:s3.amazonaws.com/%s' % item.name)
+
+    path = Path(IncBackupPath.S3COMPATIBLE.value)
+    if path.exists():
+        for item in path.iterdir():
+            with open(item) as infile:
+                _json = json.load(infile)
+                destinations.append('s3:%s/%s/%s' % (_json['S3_URL'], _json['S3_BUCKET'], _json['S3_ACCESS_KEY_ID']))
     return destinations
 
 
