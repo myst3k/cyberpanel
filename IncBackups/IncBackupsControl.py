@@ -54,15 +54,26 @@ class IncJobs(multi.Thread):
         self.metaPath = ''
         self.path = ''
         self.reconstruct = ''
+        self.destinationType = ''
 
     def run(self):
-
+        self._set_dest_type()
         if self.function == 'createBackup':
             self.createBackup()
         elif self.function == 'restorePoint':
             self.restorePoint()
         elif self.function == 'remoteRestore':
             self.restorePoint()
+
+    def _set_dest_type(self):
+        if self.backupDestinations == 'local':
+            self.destinationType = "local"
+        if self.backupDestinations.startswith("sftp:"):
+            self.destinationType = "sftp"
+        if self.backupDestinations.startswith("s3:"):
+            self.destinationType = "s3"
+        if self.backupDestinations.startswith("s3compat:"):
+            self.destinationType = "s3compat"
 
     def getRemoteBackups(self):
         if self.backupDestinations[:4] == 'sftp':
@@ -129,7 +140,7 @@ class IncJobs(multi.Thread):
 
     ####
 
-    def getAWSData(self):
+    def _get_aws_data(self):
         key = self.backupDestinations.split('/')[-1]
         path = '/home/cyberpanel/aws/%s' % (key)
         secret = open(path, 'r').read()
@@ -146,6 +157,80 @@ class IncJobs(multi.Thread):
             secret_key = _json['S3_SECRET_ACCESS_KEY']
         main_url = "https://%s/%s" % (s3_url, bucket)
         return main_url, access_key, secret_key
+
+    def _s3_backup(self, s3Type, backupPath=None, snapshotID=None, bType=None):
+        access_key = ''
+        secret_key = ''
+        repo = ''
+        try:
+            if s3Type == 's3':
+                access_key, secret_key = self._get_aws_data()
+                repo = "s3:s3.amazonaws.com/%s" % self.website.domain
+            if s3Type == 's3compat':
+                url, access_key, secret_key = self._get_s3compat_data()
+                repo = "s3:%s/%s" % (url, self.website.domain)
+
+            command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo %s backup %s --password-file %s' % (
+                access_key, secret_key, repo, backupPath, self.passwordFile)
+
+            result = ProcessUtilities.outputExecutioner(command)
+
+            if result.find('saved') == -1:
+                logging.statusWriter(self.statusPath, '%s. [5009].' % (result), 1)
+                return 0
+
+            snapShotid = result.split(' ')[-2]
+
+            if bType == 'database':
+                newSnapshot = JobSnapshots(job=self.jobid,
+                                           type='%s:%s' % (bType, backupPath.split('/')[-1].rstrip('.sql')),
+                                           snapshotid=snapShotid,
+                                           destination=self.backupDestinations)
+            else:
+                newSnapshot = JobSnapshots(job=self.jobid, type='%s:%s' % (bType, backupPath),
+                                           snapshotid=snapShotid,
+                                           destination=self.backupDestinations)
+            newSnapshot.save()
+            return 1
+
+
+        except BaseException as msg:
+            logging.statusWriter(self.statusPath, "%s [88][5009]" % (str(msg)), 1)
+            return 0
+
+    def _s3_restore(self, s3Type, backupPath=None, snapshotID=None, bType=None):
+        try:
+            if self.reconstruct == 'remote':
+                self.backupDestinations = self.backupDestinations
+
+                key, secret = self.getAWSData()
+
+                command = 'export RESTIC_PASSWORD=%s AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s  && restic -r s3:s3.amazonaws.com/%s restore %s --target %s' % (
+                    self.passwordFile,
+                    key, secret, self.website, snapshotID, self.restoreTarget)
+
+                result = ProcessUtilities.outputExecutioner(command)
+
+                if result.find('restoring') == -1:
+                    logging.statusWriter(self.statusPath, 'Failed: %s. [5009]' % (result), 1)
+                    return 0
+            else:
+                self.backupDestinations = self.jobid.destination
+
+                key, secret = self.getAWSData()
+
+                command = 'export AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s  && restic -r s3:s3.amazonaws.com/%s restore %s --password-file %s --target %s' % (
+                    key, secret, self.website, snapshotID, self.passwordFile, self.restoreTarget)
+
+                result = ProcessUtilities.outputExecutioner(command)
+
+                if result.find('restoring') == -1:
+                    logging.statusWriter(self.statusPath, 'Failed: %s. [5009]' % (result), 1)
+                    return 0
+            return 1
+        except BaseException as msg:
+            logging.statusWriter(self.statusPath, "%s [88][5009]" % (str(msg)), 1)
+            return 0
 
     def awsFunction(self, fType, backupPath=None, snapshotID=None, bType=None):
         try:
@@ -696,14 +781,17 @@ class IncJobs(multi.Thread):
             logging.statusWriter(self.statusPath, 'Backing up data..', 1)
             backupPath = '/home/%s' % (self.website.domain)
 
-            if self.backupDestinations == 'local':
+            if self.destinationType == 'local':
                 if self.localFunction(backupPath, 'data') == 0:
                     return 0
-            elif self.backupDestinations[:4] == 'sftp':
+            if self.destinationType == 'sftp':
                 if self.sftpFunction(backupPath, 'data') == 0:
                     return 0
-            else:
-                if self.awsFunction('backup', backupPath, '', 'data') == 0:
+            if self.destinationType == 's3':
+                if self._s3_backup('s3', backupPath, '', 'data') == 0:
+                    return 0
+            if self.destinationType == 's3compat':
+                if self._s3_backup('s3compat', backupPath, '', 'data') == 0:
                     return 0
 
             logging.statusWriter(self.statusPath,
@@ -796,13 +884,13 @@ class IncJobs(multi.Thread):
         try:
             logging.statusWriter(self.statusPath, 'Will first initiate backup repo..', 1)
 
-            if self.backupDestinations == 'local':
+            if self.destinationType == 'local':
                 command = 'restic init --repo %s --password-file %s' % (self.repoPath, self.passwordFile)
                 result = ProcessUtilities.outputExecutioner(command)
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
 
-            if self.backupDestinations.startswith("sftp:"):
+            if self.destinationType == 'sftp':
                 remotePath = '/home/backup/%s' % (self.website.domain)
                 command = 'export PATH=${PATH}:/usr/bin && restic init --repo %s:%s --password-file %s' % (
                     self.backupDestinations, remotePath, self.passwordFile)
@@ -810,19 +898,19 @@ class IncJobs(multi.Thread):
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
 
-            if self.backupDestinations.startswith("s3:"):
-                key, secret = self.getAWSData()
-                command = 'export AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s  && restic -r s3:s3.amazonaws.com/%s init --password-file %s' % (
+            if self.destinationType == 's3':
+                key, secret = self._get_aws_data()
+                command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo s3:s3.amazonaws.com/%s init --password-file %s' % (
                     key, secret, self.website.domain, self.passwordFile)
                 result = ProcessUtilities.outputExecutioner(command)
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
                 return 1
 
-            if self.backupDestinations.startswith("s3compat:"):
-                main_url, access_key, secret_key = self._get_s3compat_data()
+            if self.destinationType == 's3compat':
+                url, access_key, secret_key = self._get_s3compat_data()
                 command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo s3:%s/%s init --password-file %s' % (
-                    access_key, secret_key, main_url, self.website.domain, self.passwordFile)
+                    access_key, secret_key, url, self.website.domain, self.passwordFile)
                 result = ProcessUtilities.outputExecutioner(command)
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
