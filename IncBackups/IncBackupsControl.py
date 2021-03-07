@@ -91,6 +91,7 @@ class IncJobs(multi.Thread):
         try:
             self.website = self.extraArgs['website']
             self.backupDestinations = self.extraArgs['backupDestinations']
+            self._set_dest_type()
             self.passwordFile = self.extraArgs['password']
 
             result = self.getRemoteBackups()
@@ -192,8 +193,6 @@ class IncJobs(multi.Thread):
                                            destination=self.backupDestinations)
             newSnapshot.save()
             return 1
-
-
         except BaseException as msg:
             logging.statusWriter(self.statusPath, "%s [88][5009]" % (str(msg)), 1)
             return 0
@@ -794,7 +793,7 @@ class IncJobs(multi.Thread):
                 if self._s3_backup('s3compat', backupPath, '', 'data') == 0:
                     return 0
             else:
-                logging.statusWriter(self.statusPath,'no destinationType configured', 1)
+                raise BaseException
 
             logging.statusWriter(self.statusPath,
                                  'Data for %s backed to %s.' % (self.website.domain, self.backupDestinations), 1)
@@ -818,18 +817,20 @@ class IncJobs(multi.Thread):
                 if self.destinationType == 'local':
                     if self.localFunction(dbPath, 'database') == 0:
                         return 0
-                if self.destinationType == 'sftp':
+                elif self.destinationType == 'sftp':
                     if self.sftpFunction(dbPath, 'database') == 0:
                         return 0
-                if self.destinationType == 's3':
+                elif self.destinationType == 's3':
                     if self._s3_backup('s3', dbPath, '', 'database') == 0:
                         return 0
-                if self.destinationType == 's3compat':
+                elif self.destinationType == 's3compat':
                     if self._s3_backup('s3compat', dbPath, '', 'database') == 0:
                         return 0
+                else:
+                    raise BaseException
 
                 try:
-                    os.remove('/home/cyberpanel/%s.sql' % (items.dbName))
+                    os.remove('/home/cyberpanel/%s.sql' % items.dbName)
                 except BaseException as msg:
                     logging.statusWriter(self.statusPath,
                                          'Failed to delete database: %s. [IncJobs.backupDatabases.456]' % str(msg), 1)
@@ -848,15 +849,17 @@ class IncJobs(multi.Thread):
                 if self.destinationType == 'local':
                     if self.localFunction(backupPath, 'email') == 0:
                         return 0
-                if self.destinationType == 'sftp':
+                elif self.destinationType == 'sftp':
                     if self.sftpFunction(backupPath, 'email') == 0:
                         return 0
-                if self.destinationType == 's3':
+                elif self.destinationType == 's3':
                     if self._s3_backup('s3', backupPath, '', 'email') == 0:
                         return 0
-                if self.destinationType == 's3compat':
+                elif self.destinationType == 's3compat':
                     if self._s3_backup('s3compat', backupPath, '', 'email') == 0:
                         return 0
+                else:
+                    raise BaseException
 
             logging.statusWriter(self.statusPath,
                                  'Emails for %s backed to %s.' % (self.website.domain, self.backupDestinations), 1)
@@ -923,6 +926,8 @@ class IncJobs(multi.Thread):
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
                 return 1
+            else:
+                raise BaseException
 
             logging.statusWriter(self.statusPath,
                                  'Repo %s initiated for %s.' % (self.backupDestinations, self.website.domain), 1)
