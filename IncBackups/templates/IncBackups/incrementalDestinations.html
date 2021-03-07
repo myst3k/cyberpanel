@@ -198,7 +198,7 @@
                                         <td ng-bind="record.S3_URL"></td>
                                         <td ng-bind="record.S3_BUCKET"></td>
                                         <td ng-bind="record.S3_ACCESS_KEY_ID"></td>
-                                        <td ng-click="removeDestination('AWS', record.AWS_ACCESS_KEY_ID)"><img
+                                        <td ng-click="removeDestination('S3-Compatible', record.S3_BUCKET + '.' + record.AWS_ACCESS_KEY_ID)"><img
                                                 src="{% static 'images/delete.png' %}">
                                         </td>
 

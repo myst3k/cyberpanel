@@ -272,6 +272,10 @@ def remove_destination(request):
                 dest_file = Path(IncBackupPath.AWS.value) / file_name
                 dest_file.unlink()
 
+            if data['type'].lower() == IncBackupProvider.S3COMPATIBLE.value.lower():
+                dest_file = Path(IncBackupPath.S3COMPATIBLE.value) / file_name
+                dest_file.unlink()
+
         final_dic = {'status': 1, 'error_message': 'None'}
         final_json = json.dumps(final_dic)
         return HttpResponse(final_json)
