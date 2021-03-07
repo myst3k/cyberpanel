@@ -784,13 +784,13 @@ class IncJobs(multi.Thread):
             if self.destinationType == 'local':
                 if self.localFunction(backupPath, 'data') == 0:
                     return 0
-            if self.destinationType == 'sftp':
+            elif self.destinationType == 'sftp':
                 if self.sftpFunction(backupPath, 'data') == 0:
                     return 0
-            if self.destinationType == 's3':
+            elif self.destinationType == 's3':
                 if self._s3_backup('s3', backupPath, '', 'data') == 0:
                     return 0
-            if self.destinationType == 's3compat':
+            elif self.destinationType == 's3compat':
                 if self._s3_backup('s3compat', backupPath, '', 'data') == 0:
                     return 0
 
@@ -869,14 +869,17 @@ class IncJobs(multi.Thread):
 
             backupPath = '/home/%s/meta.xml' % (self.website.domain)
 
-            if self.backupDestinations == 'local':
+            if self.destinationType == 'local':
                 if self.localFunction(backupPath, 'meta') == 0:
                     return 0
-            elif self.backupDestinations[:4] == 'sftp':
+            if self.destinationType == 'sftp':
                 if self.sftpFunction(backupPath, 'meta') == 0:
                     return 0
-            else:
-                if self.awsFunction('backup', backupPath, '', 'meta') == 0:
+            if self.destinationType == 's3':
+                if self._s3_backup('s3', backupPath, '', 'meta') == 0:
+                    return 0
+            if self.destinationType == 's3compat':
+                if self._s3_backup('s3compat', backupPath, '', 'meta') == 0:
                     return 0
 
             logging.statusWriter(self.statusPath,
