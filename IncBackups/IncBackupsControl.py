@@ -813,14 +813,17 @@ class IncJobs(multi.Thread):
 
                 dbPath = '/home/cyberpanel/%s.sql' % (items.dbName)
 
-                if self.backupDestinations == 'local':
+                if self.destinationType == 'local':
                     if self.localFunction(dbPath, 'database') == 0:
                         return 0
-                elif self.backupDestinations[:4] == 'sftp':
+                if self.destinationType == 'sftp':
                     if self.sftpFunction(dbPath, 'database') == 0:
                         return 0
-                else:
-                    if self.awsFunction('backup', dbPath, '', 'database') == 0:
+                if self.destinationType == 's3':
+                    if self._s3_backup('s3', dbPath, '', 'database') == 0:
+                        return 0
+                if self.destinationType == 's3compat':
+                    if self._s3_backup('s3compat', dbPath, '', 'database') == 0:
                         return 0
 
                 try:
@@ -837,17 +840,20 @@ class IncJobs(multi.Thread):
         try:
             logging.statusWriter(self.statusPath, 'Backing up emails..', 1)
 
-            backupPath = '/home/vmail/%s' % (self.website.domain)
+            backupPath = '/home/vmail/%s' % self.website.domain
 
             if os.path.exists(backupPath):
-                if self.backupDestinations == 'local':
+                if self.destinationType == 'local':
                     if self.localFunction(backupPath, 'email') == 0:
                         return 0
-                elif self.backupDestinations[:4] == 'sftp':
+                if self.destinationType == 'sftp':
                     if self.sftpFunction(backupPath, 'email') == 0:
                         return 0
-                else:
-                    if self.awsFunction('backup', backupPath, '', 'email') == 0:
+                if self.destinationType == 's3':
+                    if self._s3_backup('s3', backupPath, '', 'email') == 0:
+                        return 0
+                if self.destinationType == 's3compat':
+                    if self._s3_backup('s3compat', backupPath, '', 'email') == 0:
                         return 0
 
             logging.statusWriter(self.statusPath,
