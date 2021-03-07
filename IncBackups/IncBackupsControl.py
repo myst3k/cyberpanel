@@ -821,7 +821,7 @@ class IncJobs(multi.Thread):
 
             if self.backupDestinations.startswith("s3compat:"):
                 main_url, access_key, secret_key = self._get_s3compat_data()
-                command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo s3:https://%s/%s init --password-file %s' % (
+                command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo s3:%s/%s init --password-file %s' % (
                     access_key, secret_key, main_url, self.website.domain, self.passwordFile)
                 result = ProcessUtilities.outputExecutioner(command)
                 if result.find('config file already exists') == -1:
