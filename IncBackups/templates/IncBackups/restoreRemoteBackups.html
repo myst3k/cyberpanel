@@ -97,6 +97,7 @@
                                         <th>{% trans "Snapshot ID" %}</th>
                                         <th>{% trans "Date" %}</th>
                                         <th>{% trans "Host" %}</th>
+                                        <th>{% trans "Tags" %}</th>
                                         <th>{% trans "Path" %}</th>
                                         <th>{% trans "Actions" %}</th>
                                     </tr>
@@ -106,6 +107,7 @@
                                         <td ng-bind="record.id"></td>
                                         <td ng-bind="record.date"></td>
                                         <td ng-bind="record.host"></td>
+                                        <td ng-bind="record.tags"></td>
                                         <td ng-bind="record.path"></td>
                                         <td>
                                             <a ng-click="restorePoint(record.id, record.path)"
