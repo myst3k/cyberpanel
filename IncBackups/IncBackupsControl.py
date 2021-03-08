@@ -124,11 +124,11 @@ class IncJobs(multi.Thread):
         else:
             if self.jobid.type[:8] == 'database' or self.extraArgs['tags'] == 'database':
                 self.restoreTarget = '/home/cyberpanel/'
-            elif self.jobid.type[:4] == 'data':
+            elif self.jobid.type[:4] == 'data' or self.extraArgs['tags'] == 'data':
                 self.restoreTarget = '/home/'
-            elif self.jobid.type[:5] == 'email':
+            elif self.jobid.type[:5] == 'email' or self.extraArgs['tags'] == 'email':
                 self.restoreTarget = '/home/vmail/'
-            elif self.jobid.type[:4] == 'meta':
+            elif self.jobid.type[:4] == 'meta' or self.extraArgs['tags'] == 'meta':
                 self.restoreTarget = '/home/%s/' % self.website
 
     def _get_s3_data(self):
