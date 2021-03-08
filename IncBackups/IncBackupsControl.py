@@ -214,7 +214,7 @@ class IncJobs(multi.Thread):
                 repo, access_key, secret_key = self._get_s3type_repo_data()
                 command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo %s restore %s --password-file %s --target %s' % (
                     access_key, secret_key, repo, snapshotID, self.passwordFile, self.restoreTarget)
-
+                logging.statusWriter(self.statusPath, '%s' % str(command), 1)
                 result = ProcessUtilities.outputExecutioner(command)
 
                 if result.find('restoring') == -1:
