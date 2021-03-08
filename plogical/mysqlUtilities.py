@@ -313,6 +313,7 @@ password=%s
                 subprocess.call(shlex.split(command))
 
             command = 'mysql --defaults-extra-file=/home/cyberpanel/.my.cnf -u %s --host=%s --port %s %s' % (mysqluser, mysqlhost, mysqlport, databaseName)
+            logging.CyberCPLogFileWriter.writeToFile(str(command))
             cmd = shlex.split(command)
 
             if additionalName == None:
