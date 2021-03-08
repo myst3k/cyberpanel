@@ -814,6 +814,7 @@ class IncJobs(multi.Thread):
                 repo, access_key, secret_key = self._get_s3type_repo_data()
                 command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo %s init --password-file %s' % (
                     access_key, secret_key, repo, self.passwordFile)
+                logging.statusWriter(self.statusPath, '%s' % str(command), 1)
                 result = ProcessUtilities.outputExecutioner(command)
                 if result.find('config file already exists') == -1:
                     logging.statusWriter(self.statusPath, result, 1)
