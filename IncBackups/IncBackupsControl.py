@@ -211,6 +211,7 @@ class IncJobs(multi.Thread):
                     return 0
             else:
                 self.backupDestinations = self.jobid.destination
+                self._set_dest_type()
                 repo, access_key, secret_key = self._get_s3type_repo_data()
                 command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo %s restore %s --password-file %s --target %s' % (
                     access_key, secret_key, repo, snapshotID, self.passwordFile, self.restoreTarget)
@@ -221,67 +222,6 @@ class IncJobs(multi.Thread):
                     logging.statusWriter(self.statusPath, 'Failed: %s. [5009]' % result, 1)
                     return 0
             return 1
-        except BaseException as msg:
-            logging.statusWriter(self.statusPath, "%s [88][5009]" % (str(msg)), 1)
-            return 0
-
-    def awsFunction(self, fType, backupPath=None, snapshotID=None, bType=None):
-        try:
-            if fType == 'backup':
-                key, secret = self._get_s3_data()
-
-                command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo s3:s3.amazonaws.com/%s backup %s --password-file %s' % (
-                    key, secret, self.website.domain, backupPath, self.passwordFile)
-
-                result = ProcessUtilities.outputExecutioner(command)
-
-                if result.find('saved') == -1:
-                    logging.statusWriter(self.statusPath, '%s. [5009].' % (result), 1)
-                    return 0
-
-                snapShotid = result.split(' ')[-2]
-
-                if bType == 'database':
-                    newSnapshot = JobSnapshots(job=self.jobid,
-                                               type='%s:%s' % (bType, backupPath.split('/')[-1].rstrip('.sql')),
-                                               snapshotid=snapShotid,
-                                               destination=self.backupDestinations)
-                else:
-                    newSnapshot = JobSnapshots(job=self.jobid, type='%s:%s' % (bType, backupPath),
-                                               snapshotid=snapShotid,
-                                               destination=self.backupDestinations)
-                newSnapshot.save()
-                return 1
-            else:
-                if self.reconstruct == 'remote':
-                    self.backupDestinations = self.backupDestinations
-
-                    key, secret = self._get_s3_data()
-
-                    command = 'RESTIC_PASSWORD=%s AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo s3:s3.amazonaws.com/%s restore %s --target %s' % (
-                        self.passwordFile,
-                        key, secret, self.website, snapshotID, self.restoreTarget)
-
-                    result = ProcessUtilities.outputExecutioner(command)
-
-                    if result.find('restoring') == -1:
-                        logging.statusWriter(self.statusPath, 'Failed: %s. [5009]' % result, 1)
-                        return 0
-                else:
-                    self.backupDestinations = self.jobid.destination
-
-                    key, secret = self._get_s3_data()
-
-                    command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo s3:s3.amazonaws.com/%s restore %s --password-file %s --target %s' % (
-                        key, secret, self.website, snapshotID, self.passwordFile, self.restoreTarget)
-
-                    result = ProcessUtilities.outputExecutioner(command)
-
-                    if result.find('restoring') == -1:
-                        logging.statusWriter(self.statusPath, 'Failed: %s. [5009]' % (result), 1)
-                        return 0
-
-                return 1
         except BaseException as msg:
             logging.statusWriter(self.statusPath, "%s [88][5009]" % (str(msg)), 1)
             return 0
