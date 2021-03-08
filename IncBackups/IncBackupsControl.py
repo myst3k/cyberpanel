@@ -72,7 +72,7 @@ class IncJobs(multi.Thread):
             self.restorePoint()
 
     def _set_dest_type(self):
-        if self.backupDestinations is not None:
+        if not self.backupDestinations:
             if self.backupDestinations == 'local':
                 self.destinationType = "local"
             if self.backupDestinations.startswith("sftp:"):
