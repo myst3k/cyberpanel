@@ -86,12 +86,12 @@ class IncJobs(multi.Thread):
     def _get_remote_backups(self):
         if self.destinationType == 'sftp':
             path = '/home/backup/%s' % self.website
-            command = 'RESTIC_PASSWORD=%s PATH=${PATH}:/usr/bin restic --repo %s:%s snapshots' % (
+            command = 'RESTIC_PASSWORD=%s PATH=${PATH}:/usr/bin restic --repo %s:%s snapshots --json' % (
                 self.passwordFile, self.backupDestinations, path)
             return ProcessUtilities.outputExecutioner(command).split('\n')
         if self.destinationType == 's3' or self.destinationType == 's3compat':
             repo, access_key, secret_key = self._get_s3type_repo_data()
-            command = 'RESTIC_PASSWORD=%s AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo %s snapshots' % (
+            command = 'RESTIC_PASSWORD=%s AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo %s snapshots --json' % (
                 self.passwordFile, access_key, secret_key, repo)
             return ProcessUtilities.outputExecutioner(command).split('\n')
         else:
@@ -102,25 +102,15 @@ class IncJobs(multi.Thread):
             self.passwordFile = self.extraArgs['password']
             result = self._get_remote_backups()
 
-            activator = 0
             json_data = []
-            if result[0].find('unable to open config file') == -1:
-                for items in reversed(result):
-
-                    if items.find('---------------') > -1:
-                        if activator == 0:
-                            activator = 1
-                            continue
-                        else:
-                            activator = 0
-
-                    if activator:
-                        entry = items.split(' ')
-                        json_data.append({'id': entry[0],
-                                          'date': "%s %s" % (entry[2], entry[3]),
-                                          'host': entry[5],
-                                          'path': entry[-1]
-                                          })
+            for snapshot in reversed(result):
+                json_data.append({
+                    'id': snapshot['short_id'],
+                    'date': snapshot['time'],
+                    'tags': ''.join(map(str, snapshot['time'])),
+                    'host': snapshot['hostname'],
+                    'path': ''.join(map(str, snapshot['paths']))
+                })
             final_json = json.dumps({'status': 1, 'error_message': "None", "data": json_data})
             return HttpResponse(final_json)
         except BaseException as msg:
