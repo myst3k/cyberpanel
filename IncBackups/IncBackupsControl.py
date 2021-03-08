@@ -166,7 +166,10 @@ class IncJobs(multi.Thread):
             repo = "s3:s3.amazonaws.com/%s" % self.website
         if self.destinationType == 's3compat':
             url, access_key, secret_key = self._get_s3compat_data()
-            repo = "s3:%s/%s" % (url, self.website)
+            if type(self.website) == str:
+                repo = "s3:%s/%s" % (url, self.website)
+            else:
+                repo = "s3:%s/%s" % (url, self.website.domain)
         return repo, access_key, secret_key
 
     def _s3_backup(self, backupPath=None, snapshotID=None, bType=None):
