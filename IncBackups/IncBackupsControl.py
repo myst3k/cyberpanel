@@ -123,14 +123,24 @@ class IncJobs(multi.Thread):
             self.restoreTarget = '/'
             return 1
         else:
-            if self.extraArgs['tags'] == 'database' or self.jobid.type[:8] == 'database':
-                self.restoreTarget = '/home/cyberpanel/'
-            elif self.extraArgs['tags'] == 'data' or self.jobid.type[:4] == 'data':
-                self.restoreTarget = '/home/'
-            elif self.extraArgs['tags'] == 'email' or self.jobid.type[:5] == 'email':
-                self.restoreTarget = '/home/vmail/'
-            elif self.extraArgs['tags'] == 'meta' or self.jobid.type[:4] == 'meta':
-                self.restoreTarget = '/home/%s/' % self.website
+            if self.reconstruct == 'remote':
+                if self.extraArgs['tags'] == 'database':
+                    self.restoreTarget = '/home/cyberpanel/'
+                elif self.extraArgs['tags'] == 'data':
+                    self.restoreTarget = '/home/'
+                elif self.extraArgs['tags'] == 'email':
+                    self.restoreTarget = '/home/vmail/'
+                elif self.extraArgs['tags'] == 'meta':
+                    self.restoreTarget = '/home/%s/' % self.website
+            else:
+                if self.jobid.type[:8] == 'database':
+                    self.restoreTarget = '/home/cyberpanel/'
+                elif self.jobid.type[:4] == 'data':
+                    self.restoreTarget = '/home/'
+                elif self.jobid.type[:5] == 'email':
+                    self.restoreTarget = '/home/vmail/'
+                elif self.jobid.type[:4] == 'meta':
+                    self.restoreTarget = '/home/%s/' % self.website
 
     def _get_s3_data(self):
         key = self.backupDestinations.split('/')[-1]
