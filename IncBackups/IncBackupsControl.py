@@ -175,8 +175,8 @@ class IncJobs(multi.Thread):
     def _s3_backup(self, backupPath=None, snapshotID=None, bType=None):
         try:
             repo, access_key, secret_key = self._get_s3type_repo_data()
-            command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo %s backup %s --password-file %s' % (
-                access_key, secret_key, repo, backupPath, self.passwordFile)
+            command = 'AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo %s --tag %s backup %s --password-file %s' % (
+                access_key, secret_key, repo, bType, backupPath, self.passwordFile)
             result = ProcessUtilities.outputExecutioner(command)
 
             if result.find('saved') == -1:
