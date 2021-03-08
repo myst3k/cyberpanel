@@ -100,7 +100,7 @@ class IncJobs(multi.Thread):
     def fetchCurrentBackups(self):
         try:
             self.passwordFile = self.extraArgs['password']
-            result = self._get_remote_backups()
+            result = json.loads(self._get_remote_backups())
 
             json_data = []
             for snapshot in reversed(result):
