@@ -313,21 +313,15 @@ password=%s
                 subprocess.call(shlex.split(command))
 
             command = 'mysql --defaults-extra-file=/home/cyberpanel/.my.cnf -u %s --host=%s --port %s %s' % (mysqluser, mysqlhost, mysqlport, databaseName)
-
-            logging.CyberCPLogFileWriter.writeToFile(str(command))
             cmd = shlex.split(command)
 
             if additionalName == None:
-                logging.CyberCPLogFileWriter.writeToFile(str(tempStoragePath))
-                logging.CyberCPLogFileWriter.writeToFile(str(databaseName))
                 with open(tempStoragePath + "/" + databaseName + '.sql', 'r') as f:
                     res = subprocess.call(cmd, stdin=f)
                 if res != 0:
                     logging.CyberCPLogFileWriter.writeToFile("Could not restore MYSQL database: " + databaseName +"! [restoreDatabaseBackup]")
                     return 0
             else:
-                logging.CyberCPLogFileWriter.writeToFile(str(tempStoragePath))
-                logging.CyberCPLogFileWriter.writeToFile(str(additionalName))
                 with open(tempStoragePath + "/" + additionalName + '.sql', 'r') as f:
                     res = subprocess.call(cmd, stdin=f)
 
