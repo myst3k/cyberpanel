@@ -88,12 +88,12 @@ class IncJobs(multi.Thread):
             path = '/home/backup/%s' % self.website
             command = 'RESTIC_PASSWORD=%s PATH=${PATH}:/usr/bin restic --repo %s:%s snapshots --json' % (
                 self.passwordFile, self.backupDestinations, path)
-            return ProcessUtilities.outputExecutioner(command).split('\n')
+            return ProcessUtilities.outputExecutioner(command)
         if self.destinationType == 's3' or self.destinationType == 's3compat':
             repo, access_key, secret_key = self._get_s3type_repo_data()
             command = 'RESTIC_PASSWORD=%s AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s restic --repo %s snapshots --json' % (
                 self.passwordFile, access_key, secret_key, repo)
-            return ProcessUtilities.outputExecutioner(command).split('\n')
+            return ProcessUtilities.outputExecutioner(command)
         else:
             raise BaseException
 
