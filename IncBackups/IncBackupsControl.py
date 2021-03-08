@@ -107,7 +107,7 @@ class IncJobs(multi.Thread):
                 json_data.append({
                     'id': snapshot['short_id'],
                     'date': snapshot['time'],
-                    'tags': ''.join(map(str, snapshot['time'])),
+                    'tags': ''.join(map(str, snapshot['tags'])),
                     'host': snapshot['hostname'],
                     'path': ''.join(map(str, snapshot['paths']))
                 })
