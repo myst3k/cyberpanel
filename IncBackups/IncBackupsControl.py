@@ -122,7 +122,7 @@ class IncJobs(multi.Thread):
             self.restoreTarget = '/'
             return 1
         else:
-            if self.jobid.type[:8] == 'database':
+            if self.jobid.type[:8] == 'database' or self.extraArgs['tags'] == 'database':
                 self.restoreTarget = '/home/cyberpanel/'
             elif self.jobid.type[:4] == 'data':
                 self.restoreTarget = '/home/'

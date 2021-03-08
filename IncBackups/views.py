@@ -527,6 +527,7 @@ def restore_point(request):
             extraArgs['backupDestinations'] = data['backupDestinations']
             extraArgs['password'] = data['password']
             extraArgs['path'] = data['path']
+            extraArgs['tags'] = data['tags']
         else:
             extraArgs = {}
             extraArgs['website'] = backup_domain
