@@ -1112,7 +1112,7 @@ app.controller('restoreRemoteBackupsInc', function ($scope, $http, $timeout) {
 
     };
 
-    $scope.restorePoint = function (id, path) {
+    $scope.restorePoint = function (id, path, tags) {
 
         $scope.status = '';
 
@@ -1126,6 +1126,7 @@ app.controller('restoreRemoteBackupsInc', function ($scope, $http, $timeout) {
             websiteToBeBacked: $scope.websiteToBeBacked,
             jobid: id,
             reconstruct: 'remote',
+            tags: tags,
             path: path,
             backupDestinations: $scope.backupDestinations,
             password: $scope.password
